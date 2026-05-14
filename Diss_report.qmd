@@ -1,0 +1,333 @@
+---
+title: "Beyond the One-Hour Standard: Using Digital Trace Data to Reconstruct Nigeria's Discontinued Unemployment Series"
+format:
+  pdf:
+    pdf-engine: xelatex
+    header-includes:
+      - "\\usepackage{longtable}"
+      - "\\usepackage{booktabs}"
+      # Fonts & spacing
+      - "\\usepackage{setspace}"
+      - "\\usepackage{caption}"
+      # Page numbering
+      - "\\usepackage{fancyhdr}"
+      - "\\pagestyle{fancy}"
+      - "\\fancyhf{}"
+      - "\\rfoot{Page \\thepage}"
+      - "\\usepackage[bottom]{footmisc}"  
+      # make toc links black
+      - "\\usepackage{hyperref}"
+      - "\\hypersetup{colorlinks=true, urlcolor=black, citecolor=black}"
+ 
+eval: true   
+echo: false        
+warning: false    
+message: false    
+toc: false
+
+fig-width: 7
+fig-height: 5
+fig-dpi: 300
+fig-align: center
+
+documentclass: article
+fontsize: 11pt
+linestretch: 1.5        
+geometry: margin=1in
+number-sections: true
+
+mainfont: Times New Roman 
+output-file: "72601.pdf"
+reference-section-title: "References"
+bibliography: references.bib
+---
+
+abstract
+
+• Overview of the study • Aim of the study • Reason for the study • Methodology used in the study • Findings in the study
+
+\clearpage
+
+# Chapter 1
+
+Accurate labor force statistics are essential for several disciplines and policy decisions. The International Conference of Labour Statisticians (ICLS), a technical body of the International Labour Organization (ILO), has since 1923 developed international guidelines to standardize how countries define concepts related to work, employment, and labour statistics. While the conference has produced standards adopted widely across countries, the structural diversity of economies around the world often generates debate when these standards are revised [@brandolini2006; @guataqui2006; @baah-boateng2015; @alenda-demoutiez2020]. A clear illustration of these structural differences can be seen in @tbl-country_minwage, which shows the varying units of works countries use to define their minimum wages — some fixing an hourly rate, others a monthly rate, and some formally recognizing both. This variation is not merely administrative; since the ILO defines employment as work performed for pay or profit, differences in how pay is standardized across countries raise the recurring question of whether a single unemployment standard can be applied uniformly across such diverse labour economies.
+
+Notably, there have been concerns about whether the methodologies and international standards hold in developing countries [@byrne2004]. An interesting case of a recent adoption of these ILO standards is Nigeria. Nigeria is the most populous African country, with 1 in 4 Africans living in the country, and it has seen the most dramatic change in figures upon adoption of the standards. Prior to adopting the official ILO unemployment standard in 2023, Nigeria operated under a domestically adapted definition that classified anyone in the labour force working less than 40 hours in the reference week as unemployed, a threshold later revised downward to 20 hours before the eventual methodological transition. Under this framework, Nigeria recorded an unemployment rate of 33.3% as of Q4 2020. Upon adoption of the ILO definition — which classifies anyone working at least one hour for pay or profit in the reference week as employed — that rate dropped to 5.3% in Q4 2022 [@nationalbureauofstatistics2023].
+
+The previous Nigerian development of domestic adaptations of the ILO guidelines exemplifies this structural divergence — a position that was institutionally defended for over a decade, as evidenced by the former Statistician-General's public admission that he resisted adopting the new methodology throughout his tenure [@kale2023; @aro2023]. The direct adoption of the resolution of the 19th ICLS (2013) in 2023 therefore generated significant media interest and public criticism, with some calling for the reversal of the methodology change and others outright dismissing the new figures [@Proshare2023]. This pushback underscores a fundamental concern: that the previous domestic adaptation of the ILO definition was arguably better suited to the economic reality of the Nigerian labour market, where subsistence work and chronic underemployment are pervasive. While it is well-established that digital trace data can be used to nowcast economic indicators in real-time, no research has attempted to use trace data to reconstruct this discontinued employment rate definition.
+
+This study addresses this gap using Google Trends data—longitudinal records of search query volume over time — which have a well‑established precedent in the labour market nowcasting literature. Askitas and Zimmermann [-@askitas2009] demonstrate strong correlations between keyword searches and unemployment rates in Germany, while Choi and Varian [-@choi2009] show that search interest in unemployment‑related topics can predict changes in labour market conditions. Building on this evidence and on the ILO’s longstanding requirement that unemployment entails active job‑seeking, the study examines whether digital search behaviour can proxy labour market distress in Nigeria, where underemployment is widespread. Specifically, it evaluates whether such data can approximate Nigeria’s discontinued pre‑2023 domestic adaptation of the ILO unemployment definition, enabling an assessment of contemporary labour distress without the distortions introduced by the 2023 methodological shift and improving comparability over time.
+
+The remainder of this paper is structured as follows: Section 2 reviews the relevant literature, Section 3 describes the data and methodology, Section 4 presents the results, and Section 5 discusses the findings and concludes.
+
+# Chapter 2
+
+This section reviews ILO technical standards alongside academic literature on the reconstruction and estimation of labour market indicators in contexts of sparse or incomplete data. It is structured in five parts. First, it discusses approaches to measuring employment. Second, it examines the use of trace data and household surveys in labour market analysis. Third, it evaluates employment definitions using behavioural data. Fourth, it reviews Nigeria as a contextual case study. Finally, it considers methodological approaches to reconstructing unemployment under data‑constrained conditions.
+
+## Measuring Employment
+
+Employment measures do not exist in isolation; they form a fundamental basis for evaluating macroeconomic performance, formulating labour and human resource policies, and designing poverty reduction strategies [@hussmanns2007]. These functions fundamentally shape how such measures are defined and operationalized, as statistical definitions must balance theoretical consistency with practical applicability across diverse labour market contexts.
+
+The International Conference of Labour Statisticians serves as the primary global forum for developing standardized concepts and methodologies in labour statistics, enabling cross-country comparability, in a manner similar to the coordinating role played by the World Trade Organization in international trade. However, unlike the WTO, whose rules are binding and enforceable, ICLS standards are non-binding, allowing for national adaptation but also introducing inconsistencies that have generated sustained research interest. This dynamic is evident in the case of Colombia, where the adoption of revised unemployment definitions led to significant theoretical and empirical consequences for both the measurement of labour market outcomes and their subsequent interpretation [@guataqui2006]. In this sense, labour statistics are best understood as constructed measures rather than purely objective facts.
+
+In response to such definitional changes, a strand of the literature has focused on the backcasting of labour market indicators using alternative or revised definitions, in order to preserve temporal comparability, as reflected in methodologies adopted by the International Labour Organization and the OECD in their modelled and harmonised estimates, underscoring the extent to which measured outcomes are contingent on underlying statistical frameworks [@Ilo_methodology]
+
+## Trace and Survey Data
+
+Despite the profound methodological vulnerabilities of household surveys and administrative registers — such as severe publication lags, falling response rates, recall bias, and susceptibility to institutional filtering—these traditional instruments remain the undisputed ground truth in labor economics [@Ilo_methodology]. The official statistics generated by national statistical agencies provide the foundational demographic anchors and structural targets against which all alternative measurements must be calibrated and evaluated [@choi2012; @askitas2009]. High-frequency digital trace data, therefore, is not a substitute for this ground truth; rather, it functions as an advanced modeling tool used to approximate, predict, and dynamically track these official benchmarks in real-time [@ochoa2025; @choi2012].
+
+The prevailing literature on labor market "nowcasting" explicitly relies on official survey data as the definitive dependent variable or the "label" for algorithmic training. For example, in their foundational work on Google econometrics, Askitas and Zimmermann [-@askitas2009]. Similarly, Nia et al. [-@nia2022] operationalize official survey-based unemployment statistics as the precise mathematical "labels" to train a Principal Component Regression (PCR) model on Twitter sentiment dataIn these predictive frameworks, the trace data acts strictly as an explanatory variable utilized to model the established survey-based reality, rather than to independently redefine what constitutes unemployment
+
+The academic and practical efficacy of digital trace data is entirely judged by how closely it can mirror the survey ground truth. Researchers employ advanced econometric and machine learning models such as ARIMA, VAR, and neural networks, specifically to minimize the prediction error between the high-frequency digital signal and the official survey benchmark [@adu2023; @inganas2023; @choi2009]. For instance, Choi and Varian demonstrate that the inclusion of Google Trends search variables is statistically validated precisely because it significantly reduces the mean absolute error (MAE) when predicting official initial jobless claims, thereby improving the model's fit to the ground truth [@choi2009; @choi2012].
+
+Even in developing contexts characterized by data scarcity, trace data is firmly anchored to official statistics. In Ghana, high-frequency search data is mathematically interpolated against low-frequency World Bank unemployment metrics to establish a reliable temporal model [@adu2023]. Likewise, complex machine learning extrapolations of subnational labor indicators in Colombia are strictly subjected to post-processing alignment, ensuring that the modeled predictions proportionally match the official national totals established by demographic projections and household surveys [@vera-jaramillo2025].
+
+The relationship between trace and survey data is inherently complementary: the survey data establishes the definitive macroeconomic reality, and the trace data provides the agile behavioral signals required to model it. As Ochoa and Revilla [-@ochoa2025] note, while passively collected digital traces capture immediate online actions, they are fundamentally incapable of verifying offline realities or complex states like total unemployment duration without the anchor of conventional survey questions. To fully capture labor market dynamics, the most effective methodological strategy dictates combining both sources. The true utility of trace data lies in its capacity to dynamically reconstruct and predict the survey-based ground truth, filling the structural and temporal gaps of traditional census data without ever usurping its role as the ultimate measure of the labor market
+
+## Evaluating Employment Definitions Using Behavioral Data
+
+The theoretical basis for which I am attempting to reconstruct the previous employment definition using behavioral data rests fundamentally on the ILO’s own strict requirement: to be classified as unemployed, individuals must be actively seeking work [@hussmanns2007; @richardson1992]. However, while traditional household surveys may struggle to capture this continuous effort objectively due to recall bias, high-frequency digital trace data provides a precise, passive behavioral signal of job-seeking intensity in the population [@ochoa2025]. Search activity for employment-related terms on platforms like Google effectively operationalizes this active-search criterion, leaving a digital footprint that reflects actual labor market distress [@askitas2009].
+
+In the Nigerian context, this behavioral signal serves as a critical tool for evaluating competing employment thresholds. The recent institutional shift by the National Bureau of Statistics (NBS) to a strict 1-hour employment standard mathematically classifies virtually any economic activity as employment @dichotomy2023. Yet, this inclusive standard sharply conflicts with real-world labor dynamics; it artificially masks Nigeria's high incidence of underemployment and poverty, where workers are forced into marginal survival activities due to a lack of social safety nets. Underemployed workers who are digitally connected possess both the acute economic incentive and the opportunity to engage in repeated job searches. Because their current employment — whether 1 hour or 15 hours a week — is fundamentally insufficient for survival, it generates continuous periods of active job-seeking behavior. Consequently, there is a strong theoretical expectation that unemployment measured using a more robust historical baseline, such as the discontinued 40-hour work-week threshold, will be significantly more reflective of actual digital search activity than the 1-hour standard [@nationalbureauofstatistics2021; @nationalbureauofstatistics2023]. The broader 40-hour definition inherently captures the vast pool of underemployed individuals who are actively searching for adequate wage jobs, aligning perfectly with the behavioral signals captured by Google Trends.
+
+If digital search behavior aligns more closely with this broader unemployment concept, it empirically validates that the 40-hour threshold possesses greater explanatory power for true labor deprivation in developing economies like Nigeria [@pavlicek2015] Ultimately, this alignment provides the necessary methodological basis for utilizing digital trace data not to replace demographic surveys, but to model and reconstruct a consistent longitudinal unemployment series under the useful but discontinued methodology, thereby circumventing the statistical distortions introduced by the 1-hour standard [@pavlicek2015].
+
+## Nigeria as a case
+
+The redefinition of unemployment is not unique to Nigeria; it is a global phenomenon driven by the profound tension between international statistical standardization and local economic realities. As Alenda-Demoutiez and Mügge [-@alenda-demoutiez2020] demonstrate, South Africa shifted from a broad, locally representative unemployment measure in the 1990s in favor of the strict ILO standard purely to signal international economic credibility, despite widespread criticism that the narrow definition obscured the systemic discouragement legacy of apartheid. Similarly, India's complex labor force surveys rely on a 365-day "usual activity" framework to capture the intricate time-disposition and underemployment of its vast informal sector [@richardson1992]. However, among these global transitions, Nigeria’s recent definitional shift represents arguably the most dramatic methodological rupture with the previous series completely discontinued, providing a critical testing ground for the utility of behavioral trace data.
+
+In 2023, the Nigerian National Bureau of Statistics (NBS) transitioned to the strict 1-hour ILO standard, causing the official headline unemployment rate to artificially plummet from 33.3% in Q4 2020 to just 5.3% in Q4 2022 and 4.1% in Q1 2023 [@nationalbureauofstatistics2023]. This extreme statistical drop does not reflect a sudden economic miracle, but rather a fundamental clash of concepts. The pre-2023 domestic framework deliberately classified individuals working 1 to 19 hours a week as unemployed, effectively utilizing a 20-hour baseline to proxy "adequate employment" in an economy where formal wage jobs account for barely 11.8% of the market [@dichotomy2023]. By contrasting this with the new 1-hour standard—which measures mere survival or "any economic activity" — the revised statistics mathematically mask the vast population of underemployed Nigerians. This creates a severe dichotomy, highlighting the paradox of an officially low unemployment rate coexisting with high systemic poverty [@dichotomy2023].
+
+Consequently, utilizing internet nowcasting to evaluate these definitions in the Nigerian context presents severe structural challenges. First, Nigeria's labor market is overwhelmingly dominated by informal employment, which consistently exceeds 92% [@nationalbureauofstatistics2021]. With over 73% of employed individuals operating their own businesses or engaging in farming activities, traditional online job-seeking mechanisms may not perfectly capture the informal realities of the broader workforce. Second, the digital divide poses a significant constraint, with internet penetration around 50% [@industry], the digital footprint disproportionately reflects the experiences of urban, connected job seekers rather than the entire national labor force.
+
+Yet, despite these structural downsides, digital trace data remains a crucial option to bridge the methodological change. As established, the goal of utilizing high-frequency search data is not to substitute the demographic ground truth of the entire survey population, but rather to model and approximate specific behavioral signals of distress. Because approximately one-third of employed Nigerians work less than 40 hours per week these connected, underemployed individuals possess the acute economic incentive to continuously search for better, formal wage jobs.
+
+Therefore, digital search behavior successfully operationalizes the broader, 40-hour domestic concept of labor deprivation. Even within formal or urban constraints, utilizing this trace data provides the only objective, longitudinal mechanism capable of reconstructing Nigeria’s discontinued unemployment series, thereby circumventing the statistical distortions introduced by the 1-hour international standard.
+
+## Reconstructing unemployment
+
+When national statistical agencies fundamentally alter their measurement criteria such as transitioning from a domestic definition to a strict 1-hour ILO standard, they artificially rupture longitudinal data series. While traditional statistical imputation methods, such as sequential regression multivariate imputation (SRMI), are effective for addressing minor missing variables within a continuous dataset [@vermaak2012] they are entirely inadequate for bridging massive, deliberate methodological breaks. Consequently, the integration of high-frequency digital trace data with advanced machine learning and econometric modeling provides a robust, necessary mechanism to reconstruct these discontinued series.
+
+Rather than attempting to replace the household survey, researchers utilize trace data strictly as an explanatory variable to model the established survey-based ground truth [@askitas2009]. A diverse array of forecasting models — ranging from traditional time-series methods like Autoregressive Integrated Moving Average (ARIMA) and Vector Autoregression (VAR) to advanced machine learning algorithms such as Neural Network Autoregression (NNAR), Random Forest, Ridge Regression, and XGBoost — are employed to establish statistical relationships between digital search behaviors and official unemployment rates [@adu2023; @davidescu2021; @xu2013].
+
+The scientific efficacy of these reconstruction models is rigorously evaluated by their capacity to mirror the historical survey baseline. Empirical evidence consistently demonstrates that incorporating Google Trends or other digital footprints into predictive models significantly reduces the Mean Absolute Error (MAE) and substantially improves forecasting accuracy compared to baseline models that lack behavioral data [@choi2012; @pavlicek2015; @xu2013]. By passively recording the continuous effort of job-seeking, trace data captures the underlying behavioral momentum of the labor market, allowing algorithms to accurately project historical definitions forward.
+
+Crucially, these predictive frameworks have proven exceptionally capable of capturing structural shocks and reconstructing labor indicators where official data is either missing, fragmented, or heavily distorted. For example, Principal Component Regression (PCR) models utilizing social media sentiment and keyword frequencies successfully nowcasted unemployment rates during the abrupt labor market disruptions of the COVID-19 pandemic, bypassing the severe delays and limitations of traditional census methods [@nia2022]. Similarly, sophisticated deep learning pipelines and temporal disaggregation techniques have been utilized to synthetically reconstruct missing subnational labor indicators over decades, enforcing strict demographic anchors and labor accounting identities to ensure total mathematical consistency with national aggregates [@vera-jaramillo2025].
+
+In the specific context of evaluating employment definitions, this modeling approach is essential for restoring longitudinal consistency. When applied to Nigeria, where the 2023 methodological shift to the 1-hour standard mathematically erased millions of underemployed individuals from the headline statistics [@nationalbureauofstatistics2023], trace data acts as an objective bridge. By calibrating digital search behavior against the discontinued pre-2023 methodology (which effectively approximated a 40-hour baseline), researchers can successfully reconstruct the historical unemployment series. This synthetic reconstruction allows policymakers to evaluate contemporary labor distress using a metric that genuinely reflects the historical series they are more familar with, completely circumventing the statistical problems introduced by the newly adopted international standard.
+
+# Methodology
+
+While the prevailing nowcasting literature primarily leverages high-frequency digital trace data to circumvent publication delays and predict contemporaneous unemployment [@pavlicek2015; @choi2012], this study confronts a fundamentally different methodological challenge: longitudinal reconstruction. In 2023, the Nigerian National Bureau of Statistics (NBS) introduced a severe methodological rupture by adopting the strict ILO 1-hour employment standard, which mathematically erased millions of underemployed individuals from headline statistics and fractured the historical time series [@dichotomy2023]. Consequently, this approach does not merely aim to estimate real-time labor market tightness; rather, it utilizes stable digital search behavior as an objective explanatory variable to project the discontinued 40-hour domestic unemployment definition forward into 2025.
+
+To successfully reconstruct this fractured series, the methodology must accurately track unemployment variations over time, empirically link objective job-search intensity to labor deprivation, and rigorously test out-of-sample prediction accuracy. A robust body of literature provides the necessary modeling precedents. Traditional univariate and multivariate time-series frameworks, such as ARIMA, ARIMAX, and Vector Autoregression (VAR), are widely employed to establish baseline statistical relationships between Google Trends data and official unemployment metrics, consistently demonstrating that the inclusion of behavioral search signals significantly reduces prediction errors [@adu2023]. Furthermore, advanced algorithmic approaches—including Neural Network Autoregression (NNAR), Support Vector Regressions (SVR), and ensemble machine learning methods like Random Forest and XGBoost—exhibit superior capability in capturing the complex, non-linear dynamics inherent in modern labor markets [@davidescu2021; @xu2013; @krishnamurthy]. However, because these established models are overwhelmingly optimized for timeliness rather than historical continuity, this study adapts these frameworks specifically for bridging institutional gaps in statistical measurement. The central methodological test is to examine whether digital search patterns that accurately modeled Nigeria's 40-hour threshold between 2004 and 2020 possess the robust explanatory power required to consistently forecast what that discontinued definition would reflect in 2025, effectively bypassing the methodological distortions introduced by the new 1-hour baseline.
+
+## Keyword Selection Strategy
+
+The efficacy of any behavioral prediction model depends fundamentally on the accurate operationalization of "job search effort" through keyword selection. Within the established literature, keyword selection strategies vary significantly, ranging from broad, automated aggregations to highly targeted semantic choices. Foundational models often rely on broad, predefined category indices — such as Google Trends' "Jobs" and "Welfare & Unemployment" categories—to capture generalized labor market distress [@choi2012]. Conversely, other researchers adopt highly comprehensive, multidimensional approaches utilizing hundreds of behavioral search terms optimized through complex feature selection algorithms and principal component analysis to reduce dimensionality [@inganas2023; @xu2013].
+
+Yet, in developing labor markets characterized by vast informality, the most effective strategies often distill this behavioral footprint into a concise set of culturally relevant terms that directly reflect the localized reality of job-seeking. For instance, researchers successfully nowcasted Ghanaian unemployment by filtering high-frequency query data down to specific, intent-driven phrases such as "jobs in Ghana" and "how to make money" [@adu2023]. By passively recording these objective digital traces, the chosen keyword strategy must accurately proxy the continuous search effort of the underemployed population. By ensuring the selected keywords capture actual labor distress, the resulting behavioral signal can genuinely approximate and reconstruct the abandoned 40-hour historical survey ground truth.
+
+However, as demonstrated by the methodological progression in the field, traditional manual keyword selection risks severe researcher bias and incomplete behavioral coverage [@inganas2023]. To circumvent these limitations and accurately model the discontinued 40-hour unemployment baseline, this study adopts a robust two-stage approach combining automated generation with rigorous empirical validation.
+
+*Stage 1: Automated Keyword Generation* Because researchers cannot reliably predict all relevant search terms across diverse demographic and socioeconomic groups, relying on manual brainstorming inevitably omits critical behavioral signals. To tackle this, this study employs a Large Language Model (LLM)—specifically Google’s Gemini 3 Pro—to generate an exhaustive, multidimensional list of job-search keywords explicitly contextualized to the Nigerian labor market.
+
+This automated approach is methodologically justified for two reasons. First, the model's large context window allows it to process detailed prompts regarding the specific nuances of Nigeria’s informal and underemployed labor dynamics. Second, because the model is trained extensively on search data, it possesses an inherent capacity to identify complex, localized search trends and colloquialisms related to labor distress that human researchers might overlook. By spotting these patterns across large text collections, the LLM successfully operationalizes the broad spectrum of actual job-seeking behavior without being constrained by Western-centric assumptions.
+
+*Stage 2: Data-Driven Feature Selection* The automated generation yields an expansive raw feature set of over 200 candidate keywords. However, modeling this against the historical survey ground truth—which comprises only 68 quarterly observations between 2004 and 2020—introduces a highly complex prediction problem. As noted in the literature, introducing a massive number of explanatory search variables without disciplined reduction leads to severe overfitting and multicollinearity [@inganas2023]. For example, Mulero and García-Hiernaux [-@mulero2023] explicitly addressed this by applying dimensionality reduction techniques to condense 163 search queries into a manageable set of regressors.
+
+Building upon this necessity for dimensionality reduction, this study employs elastic net regularization (α=0.5) to systematically filter the candidate keywords. Because elastic net integrates both L1 and L2 penalties, it resolves three critical statistical challenges simultaneously [@friedman2010]:
+
+1.  Objective Variable Selection: The L1 penalty forces the coefficients of irrelevant or noisy keywords to exactly zero. This isolates the precise behavioral signals that possess true explanatory power for the historical 40-hour baseline, discarding terms that are merely coincidentally correlated.
+
+2.  Mitigating Multicollinearity: Search behavior is inherently highly correlated (e.g., searches for “jobs in Lagos” and “Lagos employment” move simultaneously). While pure LASSO (α=1) struggles with highly correlated variables, the L2 (ridge-style) penalty keeps the coefficients of these related terms stable, preventing erratic model behavior.
+
+3.  Handling Group Structures: The combined penalties yield significantly more stable selections when predictors naturally group together, maintaining the structural integrity of the behavioral data.
+
+Conclusion By generating broadly and then selecting rigorously, this two-stage methodology maximizes the coverage of actual labor market distress while maintaining strict statistical discipline. It ensures that the final behavioral model is not an arbitrary compilation of search terms, but rather an empirically validated predictive tool uniquely calibrated to reconstruct the "numerical reality" [@fox2013] of Nigeria's discontinued 40-hour unemployment series.
+
+## The Modelling Approach: Reconstructing a Discontinued Series
+
+Most literature on digital trace data focuses on "nowcasting". Nowcasting predicts current economic indicators to mitigate publication lags. This study faces a different econometric challenge. The Nigerian National Bureau of Statistics (NBS) abandoned the 40-hour employment threshold in favor of the strict 1-hour standard. The goal is to project a discontinued historical relationship forward across this institutional rupture. The modelling approach must track complex variations over time. It must link stable search intensity to labor deprivation. It must also generalize accurately beyond the original training sample.
+
+*Limitations of Linear Models* Researchers traditionally use linear time-series models to evaluate search data. Adding Google Trends data to Autoregressive Integrated Moving Average (ARIMA) and Vector Autoregression (VAR) models reduces Mean Absolute Error (MAE) [@adu2023]. It improves forecasting accuracy compared to baseline models. However, linear models assume linear dynamics. They struggle with the structural shifts of developing labor markets [@krishnamurthy; @vera-jaramillo2025]. Standard ARIMA models also overfit high-dimensional internet search data [@adu2023]. They are suboptimal for bridging massive methodological gaps.
+
+*The Machine Learning and Regularization Solution* Machine learning algorithms overcome the limitations of linear models. Algorithms like Random Forest, Ridge Regression, and XGBoost capture non-linear structural behaviors. They generalize complex patterns [@krishnamurthy]. Search engine query data introduces high dimensionality and severe multicollinearity. Related search terms move simultaneously. Models must use strict regularization to maintain statistical discipline. Ridge Regression (L2 regularization) resolves multicollinearity. It penalizes model complexity. It retains all features but shrinks correlated coefficients. This prevents erratic model behavior. Regularization isolates the precise behavioral signals that explain the data. It discards coincidentally correlated terms.
+
+*Reconstruction and Temporal Splicing* These advanced models enforce historical continuity. Researchers combine machine learning frameworks with temporal disaggregation to reconstruct absent labor indicators. For example, Vera-Jaramillo [-@vera-jaramillo2025] used XGBoost and deep neural networks to reconstruct missing subnational labor indicators in Colombia. The models linked fragmented historical surveys to stable, high-frequency auxiliary data. This study adopts a similar approach. The predictive model learns the relationship between digital search behavior and the 40-hour threshold during the 2004–2020 period. Regularized regression algorithms identify robust underlying behavioral structures. This framework projects the behavioral momentum of the underemployed population forward into 2025. It synthesizes accurate estimates of the discontinued 40-hour definition. This bypasses the statistical distortions introduced by the 1-hour standard.
+
+## Evaluation of Model and Validation Strategy
+
+To ensure the reconstructed 40-hour unemployment series accurately reflects true labor dynamics rather than mere statistical noise, the predictive models must be subjected to rigorous out-of-sample evaluation.  Because time-series data possesses inherent temporal dependencies, traditional random data splitting is methodologically inadequate. Instead, the models must utilize a rolling window or walk-forward validation strategy [@choi2012; @inganas2023]. This technique simulates real-world forecasting by progressively expanding the training set over time and calculating sequential pseudo-out-of-sample predictions By evaluating the model across varying historical periods, this approach confirms whether the digital search signals maintain their predictive stability and structural integrity over time.
+
+The forecasting accuracy of the machine learning models must be quantified using established econometric error metrics. The prevailing nowcasting literature relies primarily on the Root Mean Square Error (RMSE), Mean Absolute Error (MAE), and Mean Absolute Percentage Error (MAPE) to assess model fit against the survey ground truth [@davidescu2021; @nia2022; @xu2013]. While RMSE is highly effective at penalizing large prediction variances by squaring the errors [@krishnamurthy], MAPE is particularly critical for this longitudinal reconstruction [@davidescu2021; @inganas2023]. Because MAPE expresses the prediction error as a unit-free relative percentage, it provides a scale-independent metric that allows researchers to objectively compare forecast accuracy across different models and economic cycles.
+
+However, simply observing a reduction in the absolute error is insufficient to validate the behavioral model. To rigorously determine whether the inclusion of high-frequency search data genuinely improves the reconstruction of the historical baseline, the statistical significance of the forecast improvement must be tested using the Diebold-Mariano test [@davidescu2021; @inganas2023; @pavlicek2015]. The Diebold-Mariano test specifically calculates the loss differential between two competing forecasts—such as a baseline autoregressive model without search data and the regularized model utilizing Google Trends—to establish whether the difference in accuracy is statistically significant or merely due to sampling uncertainty [@davidescu2021; @inganas2023; @pavlicek2015]. By applying this rigorous test, the methodology ensures that the superior explanatory power of the behavioral trace data is mathematically validated, confirming its reliability as a mechanism to reconstruct the discontinued 40-hour standard.
+
+# Data Analysis
+
+## Temporal Disaggregation and Frequency Alignment
+
+Integrating high-frequency digital trace data with official labor statistics inevitably introduces a severe sampling frequency mismatch. In this study, the behavioral predictor variables (Google Trends search queries) are generated at high frequencies (hourly, daily or monthly) with the possibility for aggregation, whereas the target ground truth; the historical 40-hour unemployment rate, was published annually in earlier periods before transitioning to a quarterly release schedule. To construct a valid predictive model, these asymmetric frequencies must be mathematically aligned without destroying the underlying behavioral signal or distorting the historical baseline.
+
+The nowcasting literature presents several strategies for handling mismatched data. One advanced approach involves Mixed-Data Sampling (MIDAS) regressions, which allow high-frequency search data to be plugged directly into the model as explanatory variables for a lower-frequency target variable without manipulating the raw data [@smith2016]. However, while MIDAS regressions are highly effective for short-term, real-time nowcasting, they are less optimal for this specific research objective. Because the primary goal of this study is to reconstruct a discontinued historical series using a highly constrained sample (68 quarterly observations), the modeling architecture requires a continuous, unified dependent variable across the entire temporal domain.
+
+Consequently, rather than utilizing mixed-frequency regressions or severely time-aggregating the search data (which sacrifices valuable behavioral volatility), this analysis adopts temporal disaggregation to transform the low-frequency target variable. Temporal disaggregation techniques are essential in data-constrained contexts, allowing researchers to mathematically estimate high-frequency time series from low-frequency aggregates while strictly preserving the trend and consistency of the original annual benchmarks [@vera-jaramillo2025].
+
+The literature establishes robust empirical precedents for this approach in developing labor markets:
+
+The Chow-Lin Method: Adu et al. (2023) successfully resolved a similar data scarcity issue in Ghana by utilizing the Chow-Lin disaggregation method to extract continuous monthly unemployment data from annual World Bank metrics [@adu2023].. This regression-based approach ensures that the average values of the newly created high-frequency series mathematically correspond to the observed low-frequency benchmarks.
+
+Quadratic Match Average: Tule et al. [-@tule2016] confronted the exact frequency mismatch addressed in this study—converting annual Nigerian unemployment data into a quarterly format to match quarterly component series. They achieved this by applying the Quadratic Match Average interpolating procedure, demonstrating that this technique is particularly suited for situations where relatively few data points require interpolation and the underlying source data is fairly smooth
+
+Following these methodological precedents, this study resolves the institutional frequency shifts by applying temporal disaggregation (specifically the Quadratic Match Average procedure) to interpolate the earlier annual unemployment records into a quarterly format [@tule2016]. This procedure neutralizes the reporting shift, yielding a continuous, unified quarterly time-series for the entire 2004–2020 period.
+
+Simultaneously, the high-frequency Google Trends keyword data are systematically extracted as time-aggregated corresponding quarterly blocks. This temporal splicing ensures that the structural integrity of the historical survey data is maintained while producing perfectly aligned, matched quarterly observations for both the target variable and the behavioral predictors. Ultimately, this mathematically synchronized dataset provides the rigorous structural foundation required for the Elastic Net and XGBoost reconstruction pipelines.
+
+
+notes
+
+
+RQ1: Does high-frequency digital trace data possess the predictive power required to reliably reconstruct the discontinued 40-hour unemployment series in Nigeria?
+
+Aim
+
+To evaluate the extent to which digital trace data (specifically Google Search Trends) can approximate the labor underutilization metrics established by the 13th ICLS, following Nigeria's transition to the 19th ICLS framework.
+
+Specific Objectives:
+
+Baseline Modeling: To establish a statistical baseline by correlating historical Google search volumes for labor-related terms with Nigeria’s unemployment data recorded under the 13th ICLS (pre-2023).
+
+Sensitivity Analysis: To determine which specific categories of search intent (e.g., job search, skill acquisition, or migration) are most sensitive to the "Old" vs. "New" definitions of employment.
+
+Measurement of Divergence: To quantify the "gap" or divergence between official 19th ICLS reports and the trace-data-approximated 13th ICLS metrics from 2023 to 2026.
+
+Assessing Predictive Validity: To determine if trace data remains a stable predictor of the 13th ICLS "status" even when the legal classification of the individual has changed (e.g., a subsistence farmer now classified as 'employed').
+
+\clearpage
+```{r}
+#| label: tbl-country_minwage
+#| tbl-cap: "@wikipedia_minwage"
+#| echo: false
+
+library(gt)
+
+ddir <- 'data'
+df <- read.csv(file.path(ddir, "minimum_wage_basis.csv"))
+
+# Drop disclaimer rows
+df <- df[df$Country != "" & !startsWith(df$Country, "DISCLAIMER") & !is.na(df$Country), ]
+
+# Rename columns to match CSV headers cleanly
+colnames(df) <- c("Country", "Wage Basis", "Notes")
+
+head(df, 58) |>
+  gt(id = "tbl-country_minwage") |>
+  tab_header(title = "Minimum wage basis by country (Abridged)") |>
+  cols_label(
+    Country    = "Country",
+    `Wage Basis` = "Wage Basis",
+    Notes      = "Notes"
+  ) |>
+  cols_width(
+    Country      ~ pct(20),
+    `Wage Basis` ~ pct(15),
+    Notes        ~ pct(65)
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#E6F1FB"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "hourly")
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#EAF3DE"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "monthly")
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#FAEEDA"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "daily")
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#EEEDFE"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "weekly")
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#FBEAF0"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "both")
+  ) |>
+  tab_style(
+    style = cell_fill(color = "#F1EFE8"),
+    locations = cells_body(columns = `Wage Basis`, rows = `Wage Basis` == "none")
+  ) |>
+  tab_options(
+    latex.use_longtable = TRUE,
+    table.font.size    = "10pt",
+    data_row.padding   = px(2),
+    table.width        = pct(90),
+    table.layout       = "fixed"
+  )
+```
+Source: Data compiled from @wikipedia_minwage
+
+\clearpage
+```{r}
+#| label: tbl-icls-sessions
+#| tbl-cap: "@icls100years"
+#| echo: false
+
+library(gt)
+library(knitr)
+
+ddir <- 'data'
+df <- read.csv(file.path(ddir, "icls_sessions.csv"))
+
+colnames(df) <- c("Session", "Year", "Key Resolutions", "Source URL")
+
+tbl <- df |>
+  gt(id = "tbl-icls-sessions") |>
+  tab_caption(
+    caption = md("ICLS Sessions and Key Resolutions Introduced @ilostat_icls")
+  ) |>
+  tab_header(
+    title = "International Conference of Labour Statisticians (ICLS): Sessions and Key Resolutions"
+  ) |>
+  cols_label(
+    Session           = "Session",
+    Year              = "Year",
+    `Key Resolutions` = "Key Resolutions / What Was Introduced",
+    `Source URL`      = "Source"
+  ) |>
+  tab_options(
+    latex.use_longtable = TRUE,
+    table.font.size     = "10pt",
+    data_row.padding    = px(2),
+    table.width         = pct(100),
+    table.layout        = "fixed"
+  )
+
+# Show URL column only in HTML — LaTeX chokes on underscores in URLs
+if (knitr::is_latex_output()) {
+  tbl <- tbl |>
+    cols_hide(`Source URL`) |>
+    cols_width(
+      Session           ~ pct(12),
+      Year              ~ pct(8),
+      `Key Resolutions` ~ pct(80)
+    )
+} else {
+  tbl <- tbl |>
+    fmt_url(
+      columns  = `Source URL`,
+      as_button = FALSE,
+      label    = "ILO Source"
+    ) |>
+    cols_width(
+      Session           ~ pct(10),
+      Year              ~ pct(7),
+      `Key Resolutions` ~ pct(65),
+      `Source URL`      ~ pct(18)
+    )
+}
+
+tbl
+```
+Source: Data compiled from @icls100years and ILO reports.

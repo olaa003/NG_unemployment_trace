@@ -1,0 +1,846 @@
+### LLM Prompt Template: Generating Context-Specific Keywords for Nigeria
+
+> **System Persona:**
+> Act as an expert labor economist, data scientist, and sociolinguist specializing in the Nigerian labor market and digital trace data. 
+>
+> **Background:**
+> I am building a predictive econometric model using Google Trends data to reconstruct Nigeria's historical 40-hour-per-week unemployment series. The Nigerian labor market is fundamentally different from advanced Western economies. Formal wage jobs are scarce (accounting for roughly 11.8% of employment), social safety nets/unemployment benefits are virtually nonexistent, and the informal sector dominates (over 90% of employment). Consequently, "labor distress" in Nigeria often manifests as underemployment, where individuals work marginal survival jobs while continuously searching for better opportunities, seeking micro-loans to start small businesses, or attempting to emigrate.
+>
+> **Task:**
+> Generate an exhaustive, multidimensional list of at least 200 Google search queries (keywords and short phrases) that Nigerians realistically use when experiencing labor market distress, underemployment, or when actively seeking work. 
+>
+> **Strict Constraints:**
+> 1. **Exclude Western Concepts:** Do NOT include terms related to unemployment insurance, jobless claims, welfare offices, or unemployment benefits, as these do not exist in the Nigerian context.
+> 2. **Reflect ILO "Active Search" Realities:** Under the ILO definition, active search includes looking for financial resources, land, or permits to establish an enterprise. Therefore, include queries related to informal survival and micro-entrepreneurship.
+> 3. **Include Cultural Colloquialisms:** Use natural Nigerian phrasing, including relevant Nigerian English structures where applicable.
+>
+> **Required Categories:**
+> Please organize the generated keywords into the following behavioral dimensions:
+>
+> *   **Category 1: Formal Job Search & Recruitment:** Search terms for scarce formal jobs. Include generic terms, specific major institutional recruitment drives (e.g., police, military, civil service), and popular Nigerian job-search platforms.
+> *   **Category 2: Emigration & "Japa" Intent:** Search terms reflecting the desire to escape local labor distress by moving abroad (e.g., visa lotteries, international scholarships, skilled worker visas).
+> *   **Category 3: Informal Sector & Survival Entrepreneurship:** Search terms for starting a micro-business, securing informal capital, or finding daily survival work (e.g., "how to make money," "quick loan app," "business ideas"). 
+> *   **Category 4: Skill Acquisition & Apprenticeships:** Terms related to learning a quick trade or vocational skill to escape underemployment.
+> *   **Category 5: Gig Economy & Remote Work:** Terms related to online freelancing or gig platforms used by digitally connected youth to bypass the stagnant local job market.
+>
+> **Output Format:**
+> Provide the output as a clean, comma-separated list within each category to facilitate easy extraction into a Python/R data frame for my feature selection pipeline.
+
+### Gemini Output
+
+```
+
+---
+
+### Category 1: Formal Job Search & Recruitment
+*Terms focused on the scarce formal sector, large-scale government recruitment, and established Nigerian job portals.*
+
+jobberman, myjobmag, hotnigerianjobs, jobzilla, ngcareers, job vacancies in lagos, graduate trainee programs 2026, nigerian police recruitment portal, nigerian army recruitment 2026, nigeria customs service recruitment, nigeria immigration service recruitment portal, civil service commission recruitment, n-power registration 2026, federal government jobs in nigeria, teaching jobs in abuja, bank recruitment in nigeria, nnpc recruitment portal, cbn recruitment, fct recruitment, frsc recruitment date, vacancies in port harcourt, oil and gas jobs nigeria, entry level jobs in nigeria, kpmg nigeria careers, pwc nigeria recruitment, shell nigeria vacancies, andela nigeria, nigeria airforce recruitment, federal ministry of education recruitment, nysc jobs, job vacancies in ogun state, hospital vacancies in nigeria, pharmaceutical jobs lagos, accounting jobs in nigeria, engineering vacancies nigeria, vacancy for lecturers in nigeria, latest job recruitment in nigeria, jobs for hnd holders, vacancies for ssce holders, graduate internship in nigeria, telt recruitment, dss recruitment portal.
+
+---
+
+### Category 2: Emigration & "Japa" Intent
+*Terms reflecting the "brain drain" and the search for labor opportunities outside the local economy due to domestic distress.*
+
+japa from nigeria, move to canada from nigeria, uk health and care worker visa, nursing jobs in uk for nigerians, student visa to uk from nigeria, ielts registration nigeria, wes evaluation for nigeria, move to australia from nigeria, work in poland for nigerians, international scholarships for nigerian students, masters in germany for nigerians, canada express entry for nigerians, moving to usa from nigeria, best countries to japa, cheap schools in europe for nigerians, uk certificate of sponsorship, canada pnp for nigerians, travel out of nigeria, portugal job seeker visa for nigerians, finland work permit for nigerians, lithuania work visa for nigerians, study in canada with scholarship, how to relocate to canada without ielts, nurses recruitment to saudi arabia, qatar jobs for nigerians, dubai security jobs for nigerians, caregiver jobs abroad, work in malta for nigerians, schengen visa from nigeria, us embassy nigeria appointment, nigerian passport renewal fast track.
+
+---
+
+### Category 3: Informal Sector & Survival Entrepreneurship
+*Terms for micro-entrepreneurial "active search," survivalist self-employment, and informal credit access.*
+
+how to start pos business, pos machine price in nigeria, moniepoint pos terminal, opay pos price, how to start poultry farming, mini importation from china to nigeria, business ideas with 50k, business to start with 100k in nigeria, quick loan apps in nigeria, fairmoney loan, palmpay loan, branch loan app, carbon loan, renmoney loan, kuda overdraft, how to make money online in nigeria, legit money making apps, urgent loan today, driver jobs in lagos, sales girl jobs in nigeria, security guard jobs, house help jobs in lagos, cleaning jobs in abuja, barman jobs, dispatch rider jobs, car hire purchase for bolt, uber driver requirements nigeria, how to start recharge card business, sachet water business setup, tailoring training fees, how to start laundry business, hair dressing salon business, small scale business ideas for ladies, lucrative business in nigeria, pop ceiling business, poultry feed price today, how to start fish farming, palm oil business in nigeria, block industry business, pig farming in nigeria, cement distributorship business.
+
+---
+
+### Category 4: Skill Acquisition & Apprenticeships
+*Terms related to vocational training and "upskilling" to escape underemployment or low-wage labor.*
+
+learn digital marketing in nigeria, graphics design course lagos, ui ux design training abuja, data analysis course fee, tailoring school near me, fashion design school in lagos, makeup school fees in nigeria, hairdressing apprenticeship, barbing salon training, phone repair course, cctv installation training, solar panel installation training, mechanical engineering apprenticeship, aluminum windows fabrication training, plumbing apprenticeship nigeria, electrical wiring training, cake making classes, catering school fees, leather works training, shoe making apprenticeship, vulcanizer apprenticeship, welding and fabrication training, auto-mechanic training, generator repair training, laptop repair training, photography school lagos, videography training nigeria, learn french in nigeria, learn german in lagos, coding bootcamp nigeria.
+
+---
+
+### Category 5: Gig Economy & Remote Work
+*Terms for digitally-mediated labor used to bypass the local currency devaluation and local labor market stagnation.*
+
+upwork nigeria, fiverr jobs for beginners, earn dollars online in nigeria, remote jobs for nigerians, virtual assistant jobs, data entry jobs from home, survey sites that pay in nigeria, freelance writing jobs, affiliate marketing for beginners nigeria, amazon kdp nigeria, crypto trading for beginners, binance p2p nigeria, sell bitcoin for naira, how to earn money on tiktok, youtube monetization nigeria, content creation ideas for beginners, transcribing jobs online, copy typing jobs, clickworker nigeria, picoworkers nigeria, toloka yandex nigeria, remote customer service jobs, tutoring jobs online, remote accounting jobs, online teaching jobs for nigerians, writing for opera news hub, blogging for money in nigeria, shopify dropshipping nigeria, forensic auditing jobs remote, high ticket affiliate marketing.
+```
+
+
+```{r}
+# Category 1: Formal Job Search & Recruitment
+formal_job_search <- c(
+  "jobberman", "myjobmag", "hotnigerianjobs", "jobzilla", "ngcareers", 
+  "job vacancies in lagos", "graduate trainee programs 2026", "nigerian police recruitment portal", 
+  "nigerian army recruitment 2026", "nigeria customs service recruitment", 
+  "nigeria immigration service recruitment portal", "civil service commission recruitment", 
+  "n-power registration 2026", "federal government jobs in nigeria", "teaching jobs in abuja", 
+  "bank recruitment in nigeria", "nnpc recruitment portal", "cbn recruitment", 
+  "fct recruitment", "frsc recruitment date", "vacancies in port harcourt", 
+  "oil and gas jobs nigeria", "entry level jobs in nigeria", "kpmg nigeria careers", 
+  "pwc nigeria recruitment", "shell nigeria vacancies", "andela nigeria", 
+  "nigeria airforce recruitment", "federal ministry of education recruitment", 
+  "nysc jobs", "job vacancies in ogun state", "hospital vacancies in nigeria", 
+  "pharmaceutical jobs lagos", "accounting jobs in nigeria", "engineering vacancies nigeria", 
+  "vacancy for lecturers in nigeria", "latest job recruitment in nigeria", 
+  "jobs for hnd holders", "vacancies for ssce holders", "graduate internship in nigeria", 
+  "telt recruitment", "dss recruitment portal"
+)
+
+# Category 2: Emigration & "Japa" Intent
+japa_intent <- c(
+  "japa from nigeria", "move to canada from nigeria", "uk health and care worker visa", 
+  "nursing jobs in uk for nigerians", "student visa to uk from nigeria", "ielts registration nigeria", 
+  "wes evaluation for nigeria", "move to australia from nigeria", "work in poland for nigerians", 
+  "international scholarships for nigerian students", "masters in germany for nigerians", 
+  "canada express entry for nigerians", "moving to usa from nigeria", "best countries to japa", 
+  "cheap schools in europe for nigerians", "uk certificate of sponsorship", "canada pnp for nigerians", 
+  "travel out of nigeria", "portugal job seeker visa for nigerians", "finland work permit for nigerians", 
+  "lithuania work visa for nigerians", "study in canada with scholarship", 
+  "how to relocate to canada without ielts", "nurses recruitment to saudi arabia", 
+  "qatar jobs for nigerians", "dubai security jobs for nigerians", "caregiver jobs abroad", 
+  "work in malta for nigerians", "schengen visa from nigeria", "us embassy nigeria appointment", 
+  "nigerian passport renewal fast track"
+)
+
+# Category 3: Informal Sector & Survival Entrepreneurship
+informal_survival <- c(
+  "how to start pos business", "pos machine price in nigeria", "moniepoint pos terminal", 
+  "opay pos price", "how to start poultry farming", "mini importation from china to nigeria", 
+  "business ideas with 50k", "business to start with 100k in nigeria", "quick loan apps in nigeria", 
+  "fairmoney loan", "palmpay loan", "branch loan app", "carbon loan", "renmoney loan", 
+  "kuda overdraft", "how to make money online in nigeria", "legit money making apps", 
+  "urgent loan today", "driver jobs in lagos", "sales girl jobs in nigeria", 
+  "security guard jobs", "house help jobs in lagos", "cleaning jobs in abuja", 
+  "barman jobs", "dispatch rider jobs", "car hire purchase for bolt", 
+  "uber driver requirements nigeria", "how to start recharge card business", 
+  "sachet water business setup", "tailoring training fees", "how to start laundry business", 
+  "hair dressing salon business", "small scale business ideas for ladies", 
+  "lucrative business in nigeria", "pop ceiling business", "poultry feed price today", 
+  "how to start fish farming", "palm oil business in nigeria", "block industry business", 
+  "pig farming in nigeria", "cement distributorship business"
+)
+
+# Category 4: Skill Acquisition & Apprenticeships
+skills_apprenticeship <- c(
+  "learn digital marketing in nigeria", "graphics design course lagos", "ui ux design training abuja", 
+  "data analysis course fee", "tailoring school near me", "fashion design school in lagos", 
+  "makeup school fees in nigeria", "hairdressing apprenticeship", "barbing salon training", 
+  "phone repair course", "cctv installation training", "solar panel installation training", 
+  "mechanical engineering apprenticeship", "aluminum windows fabrication training", 
+  "plumbing apprenticeship nigeria", "electrical wiring training", "cake making classes", 
+  "catering school fees", "leather works training", "shoe making apprenticeship", 
+  "vulcanizer apprenticeship", "welding and fabrication training", "auto-mechanic training", 
+  "generator repair training", "laptop repair training", "photography school lagos", 
+  "videography training nigeria", "learn french in nigeria", "learn german in lagos", 
+  "coding bootcamp nigeria"
+)
+
+# Category 5: Gig Economy & Remote Work
+gig_remote_work <- c(
+  "upwork nigeria", "fiverr jobs for beginners", "earn dollars online in nigeria", 
+  "remote jobs for nigerians", "virtual assistant jobs", "data entry jobs from home", 
+  "survey sites that pay in nigeria", "freelance writing jobs", 
+  "affiliate marketing for beginners nigeria", "amazon kdp nigeria", "crypto trading for beginners", 
+  "binance p2p nigeria", "sell bitcoin for naira", "how to earn money on tiktok", 
+  "youtube monetization nigeria", "content creation ideas for beginners", 
+  "transcribing jobs online", "copy typing jobs", "clickworker nigeria", 
+  "picoworkers nigeria", "toloka yandex nigeria", "remote customer service jobs", 
+  "tutoring jobs online", "remote accounting jobs", "online teaching jobs for nigerians", 
+  "writing for opera news hub", "blogging for money in nigeria", "shopify dropshipping nigeria", 
+  "forensic auditing jobs remote", "high ticket affiliate marketing"
+)
+```
+
+### ChatGPT PROMPT
+
+some key words used in search terms are pointers to unemployment in certain countries using google trends it is possible to extract such data. Several research papers have prooved this. Do a deep study an give me an exhaustive list of such keywords for the nigeria context
+
+follow up: Generate a larger expanded list
+
+### ChatGPT Output
+
+    # --- Core Unemployment & Job Search ---
+    "jobs", "job vacancy", "job search", "job openings", "job opportunity",
+    "employment", "employment opportunities", "latest jobs", "new jobs",
+    "work opportunities", "job portal", "job board", "hire me",
+    "recruitment", "recruitment portal", "apply for job", "find a job",
+    "graduate jobs", "entry level jobs", "fresher jobs", "graduate trainee",
+    "youth employment", "youth opportunities", "jobs for graduates",
+    "jobs after school", "jobs after university", "jobs after NYSC",
+    "NYSC jobs", "jobs near me",
+
+    # --- Local Language / Nigerian Pidgin ---
+    "work no dey", "no job", "job wahala", "hustle", "hustle no easy",
+    "I need job", "any job", "looking for work", "I dey find work",
+    "where work dey", "no work for area", "urgent job",
+
+    # --- CV, Interviews, & Job Prep ---
+    "CV template", "CV sample", "resume template", "resume sample",
+    "cover letter sample", "interview questions", "how to write a CV",
+    "how to write a resume", "how to write application letter",
+    "how to pass interview", "aptitude test questions",
+    "aptitude test practice", "career advice", "career guidance",
+
+    # --- Job Types (Sectoral Signals) ---
+    "part time jobs", "temporary jobs", "casual jobs", "contract jobs",
+    "weekend jobs", "remote jobs", "work from home", "online jobs",
+    "freelance jobs", "online remote jobs", "work from home jobs",
+    "side hustle", "extra income ideas", "online income",
+
+    # --- Industry-specific Jobs (Top Nigerian Sectors) ---
+    "oil and gas jobs", "banking jobs", "finance jobs", "fintech jobs",
+    "tech jobs", "IT jobs", "software developer jobs", "data analyst jobs",
+    "cybersecurity jobs", "engineering jobs", "electrical engineering jobs",
+    "mechanical engineering jobs", "civil engineering jobs",
+    "architecture jobs", "construction jobs", "sales jobs",
+    "marketing jobs", "customer service jobs", "call center jobs",
+    "lecturer jobs", "teaching jobs",
+    "healthcare jobs", "nursing jobs", "doctor jobs",
+    "medical laboratory jobs", "pharmacy jobs",
+    "logistics jobs", "warehouse jobs", "transport jobs", "driver jobs",
+    "factory jobs", "cleaning jobs", "security jobs",
+
+    # --- Job Platforms (Nigeria-specific) ---
+    "jobberman", "myjobmag", "ngcareers", "hotnigerianjobs", "hot jobs",
+    "LinkedIn jobs", "Indeed jobs", "Glassdoor jobs",
+
+    # --- Public Sector & Recruitment ---
+    "government jobs", "civil service jobs", "federal government jobs",
+    "public sector jobs", "local government jobs",
+    "police recruitment", "army recruitment", "air force recruitment",
+    "navy recruitment", "immigration recruitment",
+    "customs recruitment", "fire service recruitment",
+
+    # --- NYSC Signals ---
+    "NYSC portal", "NYSC registration", "NYSC posting",
+    "NYSC relocation", "NYSC ppa", "NYSC clearance",
+
+    # --- Government Programs / Social Interventions ---
+    "Npower", "Npower recruitment", "Npower portal", "Npower application",
+    "youth empowerment program", "grant opportunities", "business grant",
+
+    # --- Upskilling / Retraining Signals ---
+    "short courses", "professional certification", "vocational training",
+    "skill acquisition", "skills for employment", "courses that get jobs",
+    "tech bootcamp", "coding bootcamp", "digital skills",
+    "online courses for jobs", "best courses to get a job",
+    "free online courses", "job skills training",
+
+    # --- Entrepreneurship & Self-employment ---
+    "how to start a business", "business ideas", "small business ideas",
+    "small business loan", "startup ideas", "entrepreneurship",
+    "self employment", "side business ideas", "microfinance loan",
+    "agribusiness ideas", "small scale business ideas",
+
+    # --- Migration & Work Abroad ---
+    "work abroad", "work visa", "Canada work visa", "UK work visa",
+    "USA work visa", "Germany work visa", "schengen work visa",
+    "how to migrate", "how to relocate", "jobs abroad",
+    "nursing jobs abroad", "healthcare jobs abroad",
+    "skilled worker visa", "student visa", "study abroad",
+    "Canada immigration", "UK immigration", "relocation opportunities",
+
+    # --- Economic Hardship / Distress ---
+    "unemployment benefits", "unemployment support", "jobless support",
+    "social welfare", "government welfare", "palliative distribution",
+    "cost of living", "inflation", "financial help", "poverty support",
+    "minimum wage", "labour strike", "strike",
+    "protest economic hardship", "youth protest",
+
+    # --- Financial Pressure & Survival ---
+    "how to save money", "how to manage money",
+    "low budget food", "cheap food ideas", "cheap transport",
+    "cheap housing", "affordable housing", "help with rent",
+    "how to survive without a job",
+
+    # --- Mental Health (Econ Stress) ---
+    "job stress", "career stress", "depression help",
+    "mental health support", "job loss depression",
+    "unemployment depression",
+
+    # --- Economic Activity & MSMEs ---
+    "business registration", "CAC registration",
+    "company registration", "SME support", "loan application",
+    "government loan", "youth loan", "startup loan",
+
+    # --- Gig Economy / Digital Work ---
+    "freelancing", "remote work", "digital marketing jobs",
+    "content creator jobs", "social media manager jobs",
+    "virtual assistant jobs", "copywriting jobs",
+    "graphic design jobs", "video editing jobs",
+    "upwork", "fiverr", "online freelancing", "online gig jobs",
+
+    # --- Crisis-driven Signals ---
+    "food price", "fuel price", "transport cost",
+    "cost of living crisis", "economic crisis",
+    "financial crisis", "job loss", "layoff",
+    "retrenchment", "redundancy", "retrenchment benefits",
+
+    # --- Location-based (compact form) ---
+    "jobs in Lagos", "jobs in Abuja", "jobs in Port Harcourt",
+    "jobs in Kano", "jobs in Ibadan", "jobs in Kaduna",
+    "jobs in Enugu", "jobs in Owerri", "jobs in Benin",
+    "jobs in Warri", "jobs in Ilorin", "jobs in Jos"
+
+
+```{r}
+ddir <- 'data/'
+library(gtrendsR)
+
+  keywords <- c(
+    # --- Core Unemployment & Job Search ---
+    "jobs", "job vacancy", "job search", "job openings", "job opportunity",
+    "employment", "employment opportunities", "latest jobs", "new jobs",
+    "work opportunities", "job portal", "job board", "hire me",
+    "recruitment", "recruitment portal", "apply for job", "find a job",
+    "graduate jobs", "entry level jobs", "fresher jobs", "graduate trainee",
+    "youth employment", "youth opportunities", "jobs for graduates",
+    "jobs after school", "jobs after university", "jobs after NYSC",
+    "NYSC jobs", "jobs near me",
+
+    # --- Local Language / Nigerian Pidgin ---
+    "work no dey", "no job", "job wahala", "hustle", "hustle no easy",
+    "I need job", "any job", "looking for work", "I dey find work",
+    "where work dey", "no work for area", "urgent job",
+
+    # --- CV, Interviews, & Job Prep ---
+    "CV template", "CV sample", "resume template", "resume sample",
+    "cover letter sample", "interview questions", "how to write a CV",
+    "how to write a resume", "how to write application letter",
+    "how to pass interview", "aptitude test questions",
+    "aptitude test practice", "career advice", "career guidance",
+
+    # --- Job Types (Sectoral Signals) ---
+    "part time jobs", "temporary jobs", "casual jobs", "contract jobs",
+    "weekend jobs", "remote jobs", "work from home", "online jobs",
+    "freelance jobs", "online remote jobs", "work from home jobs",
+    "side hustle", "extra income ideas", "online income",
+
+    # --- Industry-specific Jobs (Top Nigerian Sectors) ---
+    "oil and gas jobs", "banking jobs", "finance jobs", "fintech jobs",
+    "tech jobs", "IT jobs", "software developer jobs", "data analyst jobs",
+    "cybersecurity jobs", "engineering jobs", "electrical engineering jobs",
+    "mechanical engineering jobs", "civil engineering jobs",
+    "architecture jobs", "construction jobs", "sales jobs",
+    "marketing jobs", "customer service jobs", "call center jobs",
+    "lecturer jobs", "teaching jobs",
+    "healthcare jobs", "nursing jobs", "doctor jobs",
+    "medical laboratory jobs", "pharmacy jobs",
+    "logistics jobs", "warehouse jobs", "transport jobs", "driver jobs",
+    "factory jobs", "cleaning jobs", "security jobs",
+
+    # --- Job Platforms (Nigeria-specific) ---
+    "jobberman", "myjobmag", "ngcareers", "hotnigerianjobs", "hot jobs",
+    "LinkedIn jobs", "Indeed jobs", "Glassdoor jobs",
+
+    # --- Public Sector & Recruitment ---
+    "government jobs", "civil service jobs", "federal government jobs",
+    "public sector jobs", "local government jobs",
+    "police recruitment", "army recruitment", "air force recruitment",
+    "navy recruitment", "immigration recruitment",
+    "customs recruitment", "fire service recruitment",
+
+    # --- NYSC Signals ---
+    "NYSC portal", "NYSC registration", "NYSC posting",
+    "NYSC relocation", "NYSC ppa", "NYSC clearance",
+
+    # --- Government Programs / Social Interventions ---
+    "Npower", "Npower recruitment", "Npower portal", "Npower application",
+    "youth empowerment program", "grant opportunities", "business grant",
+
+    # --- Upskilling / Retraining Signals ---
+    "short courses", "professional certification", "vocational training",
+    "skill acquisition", "skills for employment", "courses that get jobs",
+    "tech bootcamp", "coding bootcamp", "digital skills",
+    "online courses for jobs", "best courses to get a job",
+    "free online courses", "job skills training",
+
+    # --- Entrepreneurship & Self-employment ---
+    "how to start a business", "business ideas", "small business ideas",
+    "small business loan", "startup ideas", "entrepreneurship",
+    "self employment", "side business ideas", "microfinance loan",
+    "agribusiness ideas", "small scale business ideas",
+
+    # --- Migration & Work Abroad ---
+    "work abroad", "work visa", "Canada work visa", "UK work visa",
+    "USA work visa", "Germany work visa", "schengen work visa",
+    "how to migrate", "how to relocate", "jobs abroad",
+    "nursing jobs abroad", "healthcare jobs abroad",
+    "skilled worker visa", "student visa", "study abroad",
+    "Canada immigration", "UK immigration", "relocation opportunities",
+
+    # --- Economic Hardship / Distress ---
+    "unemployment benefits", "unemployment support", "jobless support",
+    "social welfare", "government welfare", "palliative distribution",
+    "cost of living", "inflation", "financial help", "poverty support",
+    "minimum wage", "labour strike", "strike",
+    "protest economic hardship", "youth protest",
+
+    # --- Financial Pressure & Survival ---
+    "how to save money", "how to manage money",
+    "low budget food", "cheap food ideas", "cheap transport",
+    "cheap housing", "affordable housing", "help with rent",
+    "how to survive without a job",
+
+    # --- Mental Health (Econ Stress) ---
+    "job stress", "career stress", "depression help",
+    "mental health support", "job loss depression",
+    "unemployment depression",
+
+    # --- Economic Activity & MSMEs ---
+    "business registration", "CAC registration",
+    "company registration", "SME support", "loan application",
+    "government loan", "youth loan", "startup loan",
+
+    # --- Gig Economy / Digital Work ---
+    "freelancing", "remote work", "digital marketing jobs",
+    "content creator jobs", "social media manager jobs",
+    "virtual assistant jobs", "copywriting jobs",
+    "graphic design jobs", "video editing jobs",
+    "upwork", "fiverr", "online freelancing", "online gig jobs",
+
+    # --- Crisis-driven Signals ---
+    "food price", "fuel price", "transport cost",
+    "cost of living crisis", "economic crisis",
+    "financial crisis", "job loss", "layoff",
+    "retrenchment", "redundancy", "retrenchment benefits",
+
+    # --- Location-based (compact form) ---
+    "jobs in Lagos", "jobs in Abuja", "jobs in Port Harcourt",
+    "jobs in Kano", "jobs in Ibadan", "jobs in Kaduna",
+    "jobs in Enugu", "jobs in Owerri", "jobs in Benin",
+    "jobs in Warri", "jobs in Ilorin", "jobs in Jos"
+  )
+
+# 2. Set Geography and Time
+geo_location <- "NG" # Restrict geographic footprint to Nigeria
+
+# Using "all" pulls continuous monthly data from Jan 2004 to present.
+# This prevents the 5-year chunk renormalization error and directly feeds 
+# the 'gt_monthly' object required for your temporal alignment block.
+time_period <- "all" 
+
+# 3. Function to fetch with exponential backoff on 429 errors
+fetch_with_retry <- function(keyword, geo, time, max_retries = 3) {
+  for (attempt in 1:max_retries) {
+    result <- tryCatch({
+      
+      # Added 'onlyInterest = TRUE' to optimize the API call, returning only 
+      # the time-series data needed for the machine learning matrix.
+      res <- gtrends(keyword = keyword, 
+                     geo = geo, 
+                     time = time, 
+                     onlyInterest = FALSE)
+                     
+      return(list(success = TRUE, data = res))
+      
+    }, error = function(e) {
+      if (grepl("429", e$message)) {
+        wait_time <- 60 * 2^(attempt - 1)  # Exponential backoff: 60s, 120s, 240s
+        message(paste("    RATE LIMITED (attempt", attempt, "of", max_retries, ") - waiting", wait_time, "seconds"))
+        Sys.sleep(wait_time)
+        if (attempt == max_retries) {
+          return(list(success = FALSE, error = "Max retries exceeded"))
+        } else {
+          return(NULL)  # Continue to next attempt
+        }
+      } else {
+        return(list(success = FALSE, error = e$message))
+      }
+    })
+    
+    # If result is not NULL and has success field, return it
+    if (!is.null(result) && !is.null(result$success)) {
+      return(result)
+    }
+  }
+}
+
+# 4. Execute the extraction loop
+# Initialize an empty list to store the time-series data
+gt_results_list <- list()
+
+for (kw in keywords) {
+  
+  # Create a dedicated, clean folder name for the keyword
+  folder_name <- file.path(ddir, gsub(" ", "_", kw))
+  
+  if (dir.exists(folder_name)) {
+    message(paste("Skipping", kw, "– folder already exists."))
+    next
+  }
+  
+  message(paste("Processing keyword:", kw))
+  dir.create(folder_name, recursive = TRUE)
+  
+  # -------------------------------------------------------------------------
+  # CRITICAL METHODOLOGICAL FIX: Fetch continuous data (time = "all")
+  # We do NOT loop through time periods. Using "all" retrieves a continuous 
+  # monthly series from 2004-present, ensuring the 0-100 scaling is mathematically 
+  # unified across the entire historical baseline for your machine learning models.
+  # -------------------------------------------------------------------------
+  message(paste("  Fetching continuous data (time = 'all') for:", kw))
+  
+  result <- fetch_with_retry(
+    keyword = kw,
+    geo = "NG",
+    time = "all", 
+    max_retries = 3
+  )
+  
+  if (!is.null(result) && result$success) {
+    res <- result$data
+    
+    # 1. Save the primary ML feature matrix (Interest Over Time)
+    if (!is.null(res$interest_over_time) && nrow(res$interest_over_time) > 0) {
+      saveRDS(res$interest_over_time, file.path(folder_name, "multiTimeline.rds"))
+      write.csv(res$interest_over_time, 
+                file.path(folder_name, "multiTimeline.csv"), 
+                row.names = FALSE)
+      message("    Saved: Continuous Interest Over Time (multiTimeline)")
+    } else {
+      message("    WARNING: NO TIME SERIES DATA collected for:", kw)
+    }
+    
+    # 2. Save Regional & Auxiliary Data (Great for descriptive stats)
+    if (!is.null(res$interest_by_region) && nrow(res$interest_by_region) > 0) {
+      saveRDS(res$interest_by_region, file.path(folder_name, "geoMap.rds"))
+      write.csv(res$interest_by_region, 
+                file.path(folder_name, "geoMap.csv"), 
+                row.names = FALSE)
+    }
+    
+    if (!is.null(res$interest_by_city) && nrow(res$interest_by_city) > 0) {
+      saveRDS(res$interest_by_city, file.path(folder_name, "interest_by_city.rds"))
+    }
+    
+    if (!is.null(res$related_queries) && nrow(res$related_queries) > 0) {
+      saveRDS(res$related_queries, file.path(folder_name, "related_queries.rds"))
+      write.csv(res$related_queries, 
+                file.path(folder_name, "related_queries.csv"), 
+                row.names = FALSE)
+    }
+    
+    if (!is.null(res$related_topics) && nrow(res$related_topics) > 0) {
+      saveRDS(res$related_topics, file.path(folder_name, "related_topics.rds"))
+    }
+    
+    # 3. Save the raw, unmanipulated gtrends list object for full reproducibility
+    saveRDS(res, file.path(folder_name, "raw_result.rds"))
+    
+    message(paste("  Successfully completed and saved all data for:", kw))
+    
+  } else {
+    error_msg <- if (!is.null(result)) result$error else "Unknown error"
+    message(paste("  FAILED to fetch:", kw, "- Error:", error_msg))
+  }
+  
+  # Exponential wait mechanism to prevent Google API 429 rate limits
+  message("Waiting 90 seconds before next keyword...")
+  Sys.sleep(90)
+}
+
+message("All keywords processed and saved seamlessly!")
+```
+
+```{r}
+#| eval: false
+#| echo: true
+# Google trends script
+
+library(gtrendsR)
+
+# Define time periods (5-year chunks) to prevent code 429
+time_periods <- c(
+  "2004-01-01 2008-12-31",
+  "2009-01-01 2013-12-31",
+  "2014-01-01 2018-12-31",
+  "2019-01-01 2023-12-31",
+  "2024-01-01 2025-10-31"
+)
+
+# Function to fetch with retry on 429
+fetch_with_retry <- function(keyword, geo, time, max_retries = 3) {
+  for (attempt in 1:max_retries) {
+    result <- tryCatch({
+      res <- gtrends(keyword = keyword, geo = geo, time = time)
+      return(list(success = TRUE, data = res))
+    }, error = function(e) {
+      if (grepl("429", e$message)) {
+        wait_time <- 60 * 2^(attempt - 1)  # Exponential backoff: 60s, 120s, 240s
+        message(paste("    RATE LIMITED (attempt", attempt, "of", max_retries, ") - waiting", wait_time, "seconds"))
+        Sys.sleep(wait_time)
+        if (attempt == max_retries) {
+          return(list(success = FALSE, error = "Max retries exceeded"))
+        } else {
+          return(NULL)  # Continue to next attempt
+        }
+      } else {
+        return(list(success = FALSE, error = e$message))
+      }
+    })
+    
+    # If result is not NULL and has success field, return it
+    if (!is.null(result) && !is.null(result$success)) {
+      return(result)
+    }
+  }
+  
+  # If all attempts failed
+  return(list(success = FALSE, error = "All attempts failed"))
+}
+
+for (kw in keywords) {
+  
+  folder_name <- file.path(ddir, gsub(" ", "_", kw))
+  
+  if (dir.exists(folder_name)) {
+    message(paste("Skipping", kw, "– folder already exists."))
+    next
+  }
+  
+  message(paste("Processing keyword:", kw))
+  dir.create(folder_name, recursive = TRUE)
+  
+  # Collect all time periods
+  all_interest_over_time <- list()
+  failed_periods <- c()
+  
+  for (i in seq_along(time_periods)) {
+    
+    message(paste("  Fetching period:", time_periods[i]))
+    
+    result <- fetch_with_retry(
+      keyword = kw,
+      geo = "NG",
+      time = time_periods[i],
+      max_retries = 3
+    )
+    
+    if (!is.null(result) && result$success) {
+      res <- result$data
+      
+      # Store this period's data
+      if (!is.null(res$interest_over_time) && nrow(res$interest_over_time) > 0) {
+        all_interest_over_time[[i]] <- res$interest_over_time
+      }
+      
+      # On last period, also save regional data
+      if (i == length(time_periods)) {
+        if (!is.null(res$interest_by_region)) {
+          saveRDS(res$interest_by_region, file.path(folder_name, "geoMap.rds"))
+          if (nrow(res$interest_by_region) > 0) {
+            write.csv(res$interest_by_region, 
+                      file.path(folder_name, "geoMap.csv"), 
+                      row.names = FALSE)
+          }
+        }
+        
+        if (!is.null(res$interest_by_city)) {
+          saveRDS(res$interest_by_city, file.path(folder_name, "interest_by_city.rds"))
+        }
+        
+        if (!is.null(res$related_queries)) {
+          saveRDS(res$related_queries, file.path(folder_name, "related_queries.rds"))
+          if (nrow(res$related_queries) > 0) {
+            write.csv(res$related_queries, 
+                      file.path(folder_name, "related_queries.csv"), 
+                      row.names = FALSE)
+          }
+        }
+        
+        if (!is.null(res$related_topics)) {
+          saveRDS(res$related_topics, file.path(folder_name, "related_topics.rds"))
+        }
+      }
+      
+      message(paste("  Completed period:", time_periods[i]))
+      Sys.sleep(30)  # Wait between time periods
+      
+    } else {
+      error_msg <- if (!is.null(result)) result$error else "Unknown error"
+      message(paste("  FAILED period:", time_periods[i], "- Error:", error_msg))
+      failed_periods <- c(failed_periods, time_periods[i])
+    }
+  }
+  
+  # Combine all time periods
+  if (length(all_interest_over_time) > 0) {
+    combined_data <- do.call(rbind, all_interest_over_time)
+    
+    # Save combined data as multiTimeline (interest over time)
+    saveRDS(combined_data, file.path(folder_name, "multiTimeline.rds"))
+    write.csv(combined_data, 
+              file.path(folder_name, "multiTimeline.csv"), 
+              row.names = FALSE)
+    
+    # Also save raw list
+    saveRDS(list(interest_over_time = combined_data), 
+            file.path(folder_name, "raw_result.rds"))
+    
+    message(paste("Saved:", kw))
+  } else {
+    message(paste("NO DATA collected for:", kw))
+  }
+  
+  # Log failed periods
+  if (length(failed_periods) > 0) {
+    message(paste("  Failed periods for", kw, ":", paste(failed_periods, collapse = ", ")))
+  }
+  
+  # Longer wait between keywords
+  message("Waiting 90 seconds before next keyword...")
+  Sys.sleep(90)
+}
+
+message("All keywords processed!")
+```
+
+
+```{r}
+# Load required libraries
+library(tempdisagg) # For Temporal Disaggregation (Quadratic/Denton-Cholette)
+library(glmnet)     # For Elastic Net, Ridge, and LASSO regularization
+library(forecast)   # For baseline ARIMA models and Diebold-Mariano test
+library(xgboost)    # For gradient boosted trees
+library(dplyr)
+library(xts)        # For time-series manipulation
+library(tidyverse)
+
+ddir <- file.path('.','data')
+before_2014 <- read_csv(file.path(ddir, "ObservationData_gvkisdb.csv"))
+# select just the date and unemployment rate
+unemp_annual <- before_2014 |>
+  select(Date, Value)|>
+  mutate(Date = as.Date(paste0(Date, "-01-01")))
+
+# 1. Temporal Disaggregation of the Target Variable (Unemployment)
+# We use the Denton-Cholette method, which performs the quadratic minimization 
+# procedure to smoothly interpolate the annual data into a quarterly format.
+disagg_model <- td(unemp_annual ~ 1, to = "quarterly", method = "denton-cholette", conversion = "average")
+before_2014_quarterly <- predict(disagg_model) |>
+  head(-1)
+tail(before_2014_quarterly)
+```
+
+```{r}
+after_2014 <- read_csv(file.path(ddir, "LFS Tables - Q4, 2020.csv"))
+
+# converting newer methodology to old to allow for continuous comparison
+after_2014 <- after_2014 |>
+  mutate(Value = ((`Total Unemployed` + `Worked 20 -39 Hrs`)/`Labour Force`) * 100) |>
+  select(Period, Value) |>
+  rename(Date = Period )
+
+# 2. Converting to a formal Time Series (ts) object
+# We explicitly tell R that this data starts in the 4th quarter of 2014 
+# and has a frequency of 4 (quarterly).
+recent_quarterly_ts <- ts(after_2014$Value, start = c(2014, 4), frequency = 4)
+
+# 3. Filling in Missing Quarters (Handling the NAs)
+# Using the forecast package's na.interp() function. 
+# This automatically uses robust interpolation to estimate and fill any NA gaps, 
+# ensuring your quarterly spacing remains perfectly continuous.
+recent_quarterly_clean <- na.interp(recent_quarterly_ts)
+recent_quarterly_clean <- tibble(
+  time = as.Date(as.yearqtr(time(recent_quarterly_clean))),
+  value = as.numeric(recent_quarterly_clean)
+)
+
+# 4. Splicing the Two Datasets Together
+unified_target_variable <- bind_rows(before_2014_quarterly, 
+                              recent_quarterly_clean)
+
+unified_target_variable                           
+```
+
+```{r}
+# 2. Time-Aggregation of Predictor Variables (Google Trends)
+# Aggregate the monthly high-frequency search volumes into corresponding quarterly averages
+gt_quarterly <- apply.quarterly(gt_monthly, mean)
+
+# Align the datasets to the exact 68 quarterly observations (2004 Q1 - 2020 Q4)
+y <- as.numeric(window(unemp_quarterly, start=c(2004,1), end=c(2020,4)))
+x <- as.matrix(window(gt_quarterly, start=c(2004,1), end=c(2020,4)))
+
+
+#2. Stage 2: Data-Driven Feature Selection (Elastic Net)
+#To address the severe multicollinearity and high dimensionality of the 200+ generated search queries, the Elastic Net penalty (α=0.5) is applied to filter the variables and stabilize the coefficients
+
+# Set seed for reproducibility
+set.seed(2025)
+
+# Fit the Elastic Net model (alpha = 0.5 combines L1 and L2 penalties)
+# cv.glmnet performs k-fold cross-validation to find the optimal lambda penalization
+elastic_net_cv <- cv.glmnet(x, y, alpha = 0.5, family = "gaussian")
+
+# Extract the optimal lambda that minimizes the Mean Squared Error (MSE)
+optimal_lambda <- elastic_net_cv$lambda.min
+
+# Fit the final Elastic Net model using the optimal lambda
+final_elastic_net <- glmnet(x, y, alpha = 0.5, lambda = optimal_lambda)
+
+# Extract the non-zero coefficients (the filtered behavioral keywords)
+selected_features <- predict(final_elastic_net, type = "nonzero")
+x_filtered <- x[, selected_features[[7]]]
+
+3. Walk-Forward Validation and Reconstruction
+To rigorously test the out-of-sample predictive power without data leakage, a rolling window approach is used to sequentially train and test the model
+. We will compare a baseline AR(1) model against the Google Trends-augmented model.
+# Initialize vectors to store the pseudo-out-of-sample forecast errors
+errors_baseline <- c()
+errors_augmented <- c()
+predictions_augmented <- c()
+
+# Set the initial training window size (e.g., first 40 quarters)
+train_size <- 40
+total_obs <- length(y)
+
+for (t in train_size:(total_obs - 1)) {
+  
+  # Define rolling training and testing sets
+  y_train <- y[1:t]
+  x_train <- x_filtered[1:t, ]
+  
+  y_test <- y[t + 1]
+  x_test <- matrix(x_filtered[t + 1, ], nrow = 1)
+  
+  # --- Model A: Baseline Autoregressive Model (ARIMA) ---
+  # Fits a baseline without Google Trends data
+  base_model <- auto.arima(y_train)
+  base_pred <- forecast(base_model, h = 1)$mean
+  errors_baseline <- c(errors_baseline, y_test - base_pred)
+  
+  # --- Model B: Augmented Machine Learning Model (Ridge / L2) ---
+  # Using Ridge (alpha = 0) for stable coefficient projections across the rupture
+  aug_model <- cv.glmnet(x_train, y_train, alpha = 0, lambda = optimal_lambda)
+  aug_pred <- predict(aug_model, newx = x_test, s = "lambda.min")
+  
+  predictions_augmented <- c(predictions_augmented, aug_pred)
+  errors_augmented <- c(errors_augmented, y_test - aug_pred)
+}
+4. Evaluation and Statistical Validation
+To validate whether the digital trace data genuinely improves the reconstruction of the historical baseline, the forecasting accuracy must be quantified (RMSE, MAE, MAPE) and the significance of the loss differential tested using the Diebold-Mariano test
+.
+# Calculate Error Metrics: RMSE, MAE, MAPE
+calc_rmse <- function(err) sqrt(mean(err^2))
+calc_mae <- function(err) mean(abs(err))
+calc_mape <- function(err, actual) mean(abs(err / actual)) * 100
+
+actual_test_values <- y[(train_size + 1):total_obs]
+
+cat("Baseline Model - RMSE:", calc_rmse(errors_baseline), 
+    "| MAPE:", calc_mape(errors_baseline, actual_test_values), "%\n")
+    
+cat("Augmented Model - RMSE:", calc_rmse(errors_augmented), 
+    "| MAPE:", calc_mape(errors_augmented, actual_test_values), "%\n")
+
+# Diebold-Mariano Test for Superior Predictive Ability
+# H0: The baseline and augmented models have equal forecast accuracy.
+# HA: The augmented model is more accurate (alternative="greater").
+dm_result <- dm.test(errors_baseline, errors_augmented, 
+                     alternative = "greater", h = 1, power = 2)
+
+print(dm_result)
+```
