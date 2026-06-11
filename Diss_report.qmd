@@ -184,6 +184,9 @@ Following these methodological precedents, this study resolves the institutional
 
 Simultaneously, the high-frequency Google Trends keyword data are systematically extracted as time-aggregated corresponding quarterly blocks. This temporal splicing ensures that the structural integrity of the historical survey data is maintained while producing perfectly aligned, matched quarterly observations for both the target variable and the behavioral predictors. Ultimately, this mathematically synchronized dataset provides the rigorous structural foundation required for the Elastic Net and XGBoost reconstruction pipelines.
 
+## Results from  Modelling
+
+Using and ARIMAX-styled model (be more specific here)
 
 notes
 
