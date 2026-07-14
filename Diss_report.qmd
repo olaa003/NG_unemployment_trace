@@ -13,7 +13,6 @@ format:
       # Fonts & spacing
       - "\\usepackage{setspace}"
       - "\\doublespacing"
-      - "\\documentclass[12pt,a4paper]{article}"
       - "\\usepackage{caption}"
       # Page numbering
       - "\\usepackage{fancyhdr}"
@@ -37,8 +36,10 @@ fig-height: 5
 fig-dpi: 300
 fig-align: center
       
-geometry: margin=1in
+geometry: margin=1in, a4paper
 number-sections: true
+fontsize: 12pt
+documentclass: article
 
 mainfont: Times New Roman 
 output-file: "72601.pdf"
@@ -143,6 +144,8 @@ More importantly, the results indicate that although both definitions share seve
 \newpage
 
 \tableofcontents
+
+\newpage
 
 \listoffigures
 
