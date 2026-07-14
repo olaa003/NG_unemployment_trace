@@ -1,0 +1,523 @@
+
+```{r}
+# ==============================================================================
+# Setup and Toggles
+# ==============================================================================
+
+library(dplyr)
+library(lubridate)
+library(xts)
+library(zoo)
+library(ggplot2)
+library(ranger)
+library(yardstick)
+library(glmnet)
+library(tempdisagg)
+library(vip)
+library(purrr)
+library(tidyr)
+library(tidytext)
+
+ddir <- file.path(getwd(), "data")
+wdir <- getwd()
+set.seed(123)
+
+# ---- Toggles ----
+INCLUDE_BES       <- FALSE   # BES starts 2008 Q2 — toggling off extends panel back to 2000
+INCLUDE_CES       <- FALSE   # CES ends 2020 Q4; only useful for pre-break modelling
+INCLUDE_CALL_RATE <- FALSE   # Call_Rate is ~62% NA across the panel
+BES_START_DATE    <- as.Date("2008-04-01")  # only used when INCLUDE_BES = TRUE
+
+# ---- Savings/interest rate column toggles ----
+INCLUDE_SAVINGS_RATE  <- TRUE
+INCLUDE_TD_7D         <- FALSE   
+INCLUDE_TD_1M         <- FALSE
+INCLUDE_TD_3M         <- TRUE    # representative short-end
+INCLUDE_TD_6M         <- FALSE
+INCLUDE_TD_12M        <- TRUE    # representative long-end
+INCLUDE_TD_OVER12M    <- FALSE
+INCLUDE_PRIME_LENDING <- TRUE
+INCLUDE_MAX_LENDING   <- TRUE
+
+# ---- Google Trends toggle ----
+INCLUDE_GT      <- FALSE   # FALSE = macro-only model (longer panel, back to 1999)
+GT_PRESCREEN    <- FALSE   # drop near-constant / mostly-zero keyword series
+GT_MIN_NONZERO  <- 0.50    # keep a keyword only if >=50% of quarters are non-zero
+GT_TOP_K        <- NA      # NA = keep all that pass
+
+# Master flag switch
+INCLUDE_FLAGS <- FALSE
+
+# Individual flag toggles (only effective when INCLUDE_FLAGS = TRUE)
+FLAG_BES_GAP           <- TRUE   
+FLAG_BES_CADENCE       <- TRUE   
+FLAG_CES_GAP           <- TRUE   
+FLAG_METHODOLOGY_BREAK <- TRUE   
+
+# ==============================================================================
+# 1. Load Data
+# ==============================================================================
+
+qtr_to_month <- c("Q1" = 1, "Q2" = 4, "Q3" = 7, "Q4" = 10)
+
+to_qstart <- function(year, period) {
+  period <- as.character(period)
+  out <- as.Date(rep(NA, length(period)))
+  is_q <- period %in% names(qtr_to_month) # Fixed typo here (%in%)
+  is_m <- period %in% month.abb          # Fixed typo here (%in%)
+  out[is_q] <- as.Date(sprintf("%d-%02d-01", as.integer(year[is_q]), qtr_to_month[period[is_q]]))
+  m <- match(period[is_m], month.abb)
+  q_first <- ((m - 1) %/% 3) * 3 + 1
+  out[is_m] <- as.Date(sprintf("%d-%02d-01", as.integer(year[is_m]), q_first))
+  out
+}
+
+# --- File 1: CPI (Monthly Levels Saved First) ---
+cpi_raw <- read.csv(file.path(ddir, "monthly_CPI.csv"))
+cpi_dates <- make_date(cpi_raw$Year, match(cpi_raw$month, month.abb), 1)
+cpi_monthly_level <- xts(as.numeric(cpi_raw$Monthly_CPI), order.by = cpi_dates) |> setNames("CPI_Level")
+
+# --- File 2: Savings & Interest Rates (Monthly) ---
+sav_raw <- read.csv(file.path(ddir, "savings_rate.csv"), check.names = FALSE)
+sav_dates <- make_date(sav_raw$year, match(sav_raw$month, month.abb), 1)
+sav_xts <- xts(sav_raw %>% select(-year, -month), order.by = sav_dates)
+colnames(sav_xts) <- c("Savings_Rate", "Call_Rate", "TD_7d", "TD_1m", "TD_3m",
+                       "TD_6m", "TD_12m", "TD_over12m", "Prime_Lending", "Max_Lending")
+
+sav_toggles <- c(
+  Savings_Rate  = INCLUDE_SAVINGS_RATE,
+  Call_Rate     = INCLUDE_CALL_RATE,
+  TD_7d         = INCLUDE_TD_7D,
+  TD_1m         = INCLUDE_TD_1M,
+  TD_3m         = INCLUDE_TD_3M,
+  TD_6m         = INCLUDE_TD_6M,
+  TD_12m        = INCLUDE_TD_12M,
+  TD_over12m    = INCLUDE_TD_OVER12M,
+  Prime_Lending = INCLUDE_PRIME_LENDING,
+  Max_Lending   = INCLUDE_MAX_LENDING
+)
+keep_cols <- names(sav_toggles)[sav_toggles]
+sav_xts <- sav_xts[, keep_cols]
+
+# --- File 3: GDP (Annual → Quarterly via Denton-Cholette) ---
+gdp_raw <- read.csv(file.path(ddir, "GDP_Nigeria.csv"))
+gdp_annual <- ts(gdp_raw[, 2], start = min(gdp_raw$INDICATORS), frequency = 1)
+
+# Smooth baseline Denton-Cholette interpolation
+td_gdp <- td(gdp_annual ~ 1, to = "quarterly", method = "denton-cholette", conversion = "average")
+gdp_q_vals <- as.numeric(predict(td_gdp))
+gdp_q_index <- seq(as.Date(sprintf("%d-01-01", min(gdp_raw$INDICATORS))), by = "3 months", length.out = length(gdp_q_vals))
+gdp_q <- xts(gdp_q_vals, order.by = gdp_q_index) |> setNames("GDP_constant_2010")
+
+# --- File 4: BES (Mixed Quarterly/Monthly) ---
+if (INCLUDE_BES) {
+  bes_raw <- read.csv(file.path(ddir, "BES_data.csv"), fileEncoding = "UTF-8-BOM")
+  bes_raw$qdate <- to_qstart(bes_raw$Year, bes_raw$Period)
+  bes_raw$is_monthly_obs <- bes_raw$Period %in% month.abb
+
+  bes_q <- bes_raw %>%
+    filter(!is.na(qdate), qdate >= BES_START_DATE) %>%
+    group_by(qdate) %>%
+    summarise(
+      BES_Employment_Outlook = mean(Employment_Outlook_Index, na.rm = TRUE),
+      BES_monthly_cadence    = as.integer(any(is_monthly_obs))
+    ) %>%
+    arrange(qdate)
+
+  if (INCLUDE_FLAGS && FLAG_BES_CADENCE) {
+    bes_xts <- xts(bes_q[, c("BES_Employment_Outlook", "BES_monthly_cadence")], order.by = bes_q$qdate)
+  } else {
+    bes_xts <- xts(bes_q[, "BES_Employment_Outlook", drop = FALSE], order.by = bes_q$qdate) |> setNames("BES_Employment_Outlook")
+  }
+}
+
+# --- File 5: CES (Quarterly) ---
+ces_raw <- read.csv(file.path(ddir, "CES_data.csv"), fileEncoding = "UTF-8-BOM")
+ces_raw$qdate <- to_qstart(ces_raw$Year, ces_raw$Quarter)
+ces_xts <- xts(ces_raw$Unemployment_Expectation_Index_Next_12_Months, order.by = ces_raw$qdate) |> setNames("CES_Unemp_Exp_12m")
+
+# ==============================================================================
+# 2. Convert Monthly Sources to Quarterly (With Correct Level Aggregation)
+# ==============================================================================
+
+to_quarterly_mean <- function(x) {
+  ep <- endpoints(x, on = "quarters")
+  q  = period.apply(x, INDEX = ep, FUN = colMeans, na.rm = TRUE)
+  m <- as.integer(format(index(q), "%m"))
+  q_first_month <- ((m - 1) %/% 3) * 3 + 1
+  index(q) <- as.Date(sprintf("%s-%02d-01", format(index(q), "%Y"), q_first_month))
+  q
+}
+
+# Aggregate CPI level to quarterly, THEN calculate stationary rate transformations
+cpi_q_level <- to_quarterly_mean(cpi_monthly_level)
+
+
+sav_q <- to_quarterly_mean(sav_xts)
+
+# ==============================================================================
+# 3. Merge All Sources onto Quarterly Index
+# ==============================================================================
+
+xts_list <- list(cpi_q_level, sav_q, gdp_q)
+if (INCLUDE_BES) xts_list <- c(xts_list, list(bes_xts))
+if (INCLUDE_CES) xts_list <- c(xts_list, list(ces_xts))
+
+combined <- Reduce(function(a, b) merge.xts(a, b, join = "outer"), xts_list)
+
+# ==============================================================================
+# 4. Interpolate Interior Gaps and Trim Edges
+# ==============================================================================
+
+if (INCLUDE_FLAGS && FLAG_BES_GAP && "BES_Employment_Outlook" %in% colnames(combined)) {
+  combined$BES_interpolated <- as.integer(is.na(combined$BES_Employment_Outlook))
+}
+if (INCLUDE_FLAGS && FLAG_CES_GAP && "CES_Unemp_Exp_12m" %in% colnames(combined)) {
+  combined$CES_interpolated <- as.integer(is.na(combined$CES_Unemp_Exp_12m))
+}
+if (INCLUDE_FLAGS && FLAG_METHODOLOGY_BREAK) {
+  combined$post_break <- as.integer(index(combined) >= as.Date("2023-01-01"))
+}
+
+combined_clean <- na.approx(combined, na.rm = FALSE) |> na.omit()
+
+# ==============================================================================
+# Corrected Diagnostic Plots (Using Explicit Stats Generic Routing)
+# ==============================================================================
+par(mfrow = c(2, 2), mar = c(3, 4, 2, 1))
+
+# Master dates for uniform alignment across columns
+dates <- index(combined_clean)
+
+# Plot 1: CPI Growth
+cpi_col <- intersect(c("CPI_MoM", "CPI_Level", "CPI"), colnames(combined_clean))[1]
+
+if (!is.na(cpi_col)) {
+  cpi_growth <- (combined_clean[, cpi_col] - stats::lag(combined_clean[, cpi_col], 4)) /
+                 stats::lag(combined_clean[, cpi_col], 4)
+  plot(dates, as.numeric(cpi_growth), type = "l",
+       main = "CPI (Yearly Growth)", xlab = "", ylab = "Rate")
+  abline(h = 0, col = "grey50", lty = 2)
+} else {
+  plot.new(); text(0.5, 0.5, "CPI Column Not Found")
+}
+
+# Plot 2: Savings Rate
+plot(dates, as.numeric(combined_clean$Savings_Rate), type = "l",
+     main = "Savings Rate", xlab = "", ylab = "%")
+
+# Plot 3: GDP YoY Growth - FIX: Use stats::lag to trigger the xts method safely
+gdp_series <- combined_clean$GDP_constant_2010
+gdp_growth <- (gdp_series - stats::lag(gdp_series, 4)) / stats::lag(gdp_series, 4)
+
+plot(dates, as.numeric(gdp_growth), type = "l",
+     main = "Real GDP Growth (YoY)", xlab = "", ylab = "Growth Rate")
+abline(h = 0, col = "grey50", lty = 2)
+
+# Plot 4: Prime Lending Rate
+plot(dates, as.numeric(combined_clean$Prime_Lending), type = "l",
+     main = "Prime Lending Rate", xlab = "", ylab = "%")
+
+# Reset graphics device back to default 1x1 grid
+par(mfrow = c(1, 1))
+
+# ==============================================================================
+# 5. Export Feature Matrix
+# ==============================================================================
+# === Now convert to tibble for downstream use ===
+combined_clean_df <- combined_clean |>
+  zoo::fortify.zoo() |>
+  as_tibble() |>
+  rename(time = Index) |>
+  mutate(time = as.Date(time))
+
+
+
+dir.create("output", showWarnings = FALSE)
+saveRDS(combined_clean_df, "output/x_quarterly_xts.rds")
+
+# ==============================================================================
+# 6. Aligned Modeling Pipelines
+# ==============================================================================
+
+x_df <- combined_clean_df 
+y_df <- readRDS("output/unified_target_variable.rds") |> as_tibble() |> rename(unemployment = value)
+
+model_df <- inner_join(y_df, x_df, by = "time") |> arrange(time)
+
+# Add structured cross-year autoregressive lags
+model_df <- model_df |>
+  mutate(
+    y_lag4  = lag(unemployment, 4),
+    y_lag8  = lag(unemployment, 8),
+    y_yoy   = y_lag4 - lag(unemployment, 8)
+  ) |>
+  filter(!is.na(y_lag8))
+
+# ---- Elastic Net Function with Hyperparameter Alpha Grid-Search Optimization ----
+rolling_origin_enet <- function(data, target_col, min_train = 30, nfolds_cv = 5, standardize = TRUE) {
+  n <- nrow(data)
+  results <- vector("list", n - min_train)
+  alphas <- seq(0, 1, by = 0.2) # Alpha grid search space
+
+  for (i in seq(min_train + 1, n)) {
+    train <- data[1:(i - 1), ]
+    test  <- data[i, , drop = FALSE]
+
+    x_train <- train |> select(-time, -all_of(target_col)) |> as.matrix()
+    y_train <- train[[target_col]]
+    x_test  <- test  |> select(-time, -all_of(target_col)) |> as.matrix()
+
+    best_mse <- Inf
+    best_cv_fit <- NULL
+    best_alpha <- 0.5
+
+    # Grid search across Ridge, Blends, and Lasso variations
+    for (a in alphas) {
+      cv_fit <- cv.glmnet(x = x_train, y = y_train, alpha = a, nfolds = nfolds_cv, standardize = standardize, family = "gaussian")
+      min_mse <- min(cv_fit$cvm)
+      if (min_mse < best_mse) {
+        best_mse <- min_mse
+        best_cv_fit <- cv_fit
+        best_alpha <- a
+      }
+    }
+
+    pred_point  <- predict(best_cv_fit, newx = x_test, s = "lambda.min") |> as.numeric()
+    train_preds <- predict(best_cv_fit, newx = x_train, s = "lambda.min") |> as.numeric()
+    resid_sd    <- sd(y_train - train_preds)
+
+    results[[i - min_train]] <- tibble(
+      time        = test$time,
+      actual      = test[[target_col]],
+      predicted   = pred_point,
+      pi_lower    = pred_point - 1.645 * resid_sd,
+      pi_upper    = pred_point + 1.645 * resid_sd,
+      alpha_opt   = best_alpha,
+      lambda_min  = best_cv_fit$lambda.min
+    )
+  }
+  bind_rows(results)
+}
+
+# Run level-based estimation loop
+cv_results <- rolling_origin_enet(model_df, target_col = "unemployment", min_train = 36)
+
+# ==============================================================================
+# 7. Alternative Modeling Sample (Stationary Differenced Workflow)
+# ==============================================================================
+
+# FIX: Map stationary features directly to the stationary differenced target variable
+model_df_diff <- model_df |>
+  mutate(
+    d_unemployment  = unemployment - y_lag4,
+    gdp_growth_yoy  = (GDP_constant_2010 - lag(GDP_constant_2010, 4)) / lag(GDP_constant_2010, 4),
+    d_prime_lending = Prime_Lending - lag(Prime_Lending, 4),
+    d_max_lending   = Max_Lending - lag(Max_Lending, 4),
+    cpi_growth_yoy  = (CPI_Level - lag(CPI_Level, 4)) / lag(CPI_Level, 4),
+    d_savings_rate  = Savings_Rate - lag(Savings_Rate, 4)
+  ) |>
+  select(-GDP_constant_2010, -Prime_Lending, -Max_Lending, -Savings_Rate, -unemployment) |>
+  filter(if_all(everything(), ~ !is.na(.)))
+
+cv_diff <- rolling_origin_enet(data = model_df_diff, target_col = "d_unemployment", min_train = 36)
+
+# Reconstruct level boundaries out of difference outputs
+cv_diff_levels <- cv_diff |>
+  left_join(model_df |> select(time, y_lag4), by = "time") |>
+  rename(actual_diff = actual, pred_diff = predicted) |>
+  mutate(
+    actual_level = actual_diff + y_lag4,
+    pred_level   = pred_diff   + y_lag4
+  )
+
+# Calculate evaluation metrics for the level reconstruction
+level_metrics <- cv_diff_levels |>
+  summarise(
+    rmse  = sqrt(mean((actual_level - pred_level)^2)),
+    mae   = mean(abs(actual_level - pred_level)),
+    nrmse       = sqrt(mean((actual_level - pred_level)^2)) / mean(actual_level),
+    coverage_90 = mean(actual_level >= (pi_lower + y_lag4) & 
+                       actual_level <= (pi_upper + y_lag4))
+  )
+
+# Generate the tracking visualization
+p_cv <- ggplot(cv_diff_levels, aes(x = time)) +
+  geom_ribbon(aes(ymin = pi_lower + y_lag4, ymax = pi_upper + y_lag4),
+              fill = "#2E5C8A", alpha = 0.15) +
+  geom_line(aes(y = actual_level), colour = "#111111", linewidth = 0.7) +
+  geom_line(aes(y = pred_level),   colour = "#2E5C8A", linewidth = 0.7, linetype = "dashed") +
+  labs(
+    title    = "Rolling-Origin Reconstructed Unemployment Level Forecasts",
+    subtitle = paste0("Solid = Actual, Dashed = Reconstructed 1-Quarter-Ahead Forecast | 90% PI Band"),
+    caption  = paste0("Model Performance: NRMSE = ", round(level_metrics$nrmse, 3), 
+                      " · PI Interval Coverage = ", round(level_metrics$coverage_90, 2)),
+    x        = NULL,
+    y        = "Unemployment Rate (%)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12, colour = "#111111", margin = margin(b = 3)),
+    plot.subtitle      = element_text(size = 9.5, colour = "#555555", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8.5, colour = "#777777", hjust = 0, margin = margin(t = 10)),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(colour = "#eef0f2", linewidth = 0.5),
+    plot.title.position = "plot"
+  )
+
+print(p_cv)
+ggsave("output/reconstructed_level_forecasts.png", p_cv, width = 9, height = 4.5, dpi = 300, bg = "white")
+
+# ==============================================================================
+# 8. Feature Importance Pipeline Function
+# ==============================================================================
+
+run_importance_pipeline <- function(target_name, file_path, features_xts) {
+  y_df <- readRDS(file_path) |> as_tibble() |> rename(unemployment = value)
+
+    # Single clean branch — either way, x_df ends up as a tibble with a 'time' column
+  if (inherits(features, "xts")) {
+    x_df <- features |>
+      zoo::fortify.zoo() |>
+      as_tibble() |>
+      rename(time = Index) |>
+      mutate(time = as.Date(time))
+  } else {
+    x_df <- features |>
+      as_tibble() |>
+      mutate(time = as.Date(time))
+  }
+
+  
+  model_df <- inner_join(y_df, x_df, by = "time") |> arrange(time)
+  
+  # Ensure stationary synchronization inside the importance calculations
+  model_df_diff <- model_df |>
+    mutate(
+      y_lag4          = lag(unemployment, 4),
+      y_lag8          = lag(unemployment, 8),
+      d_unemployment  = unemployment - y_lag4,
+      gdp_growth_yoy  = (GDP_constant_2010 - lag(GDP_constant_2010, 4)) / lag(GDP_constant_2010, 4),
+      d_prime_lending = Prime_Lending - lag(Prime_Lending, 4),
+      d_max_lending   = Max_Lending - lag(Max_Lending, 4),
+      d_savings_rate  = Savings_Rate - lag(Savings_Rate, 4)
+    ) |>
+    select(-GDP_constant_2010, -Prime_Lending, -Max_Lending, -Savings_Rate, -unemployment) |>
+    filter(if_all(everything(), ~ !is.na(.)))
+  
+  x_mat <- model_df_diff |> select(-time, -d_unemployment) |> as.matrix()
+  y_vec <- model_df_diff$d_unemployment
+  
+  cv_fit      <- cv.glmnet(x = x_mat, y = y_vec, alpha = 0.5, standardize = TRUE, family = "gaussian")
+  final_model <- glmnet(x = x_mat, y = y_vec, alpha = 0.5, lambda = cv_fit$lambda.min, standardize = TRUE)
+  
+  coefs <- coef(cv_fit, s = "lambda.min")
+  sign_df <- tibble(feature = rownames(coefs)[-1], coef = as.numeric(coefs)[-1]) |>
+    mutate(direction = case_when(coef > 0 ~ "Positive", coef < 0 ~ "Negative", TRUE ~ "Dropped"))
+  
+  pred_wrapper <- function(object, newdata) {
+    as.numeric(predict(object, newx = as.matrix(newdata), s = object$lambda))
+  }
+  
+  set.seed(42)
+  imp <- vi(object = final_model, method = "permute", train = as.data.frame(x_mat),
+            target = y_vec, metric = "rmse", pred_wrapper = pred_wrapper, nsim = 20) |>
+    rename(feature = Variable, importance = Importance)
+  
+  imp |>
+    left_join(sign_df, by = "feature") |>
+    mutate(
+      target_definition = target_name,
+      rel_importance    = (importance / max(importance, na.rm = TRUE)) * 100
+    )
+}
+
+# --- Compute and Combine Importance Across Targets ---
+features_xts <- readRDS("output/x_quarterly_xts.rds")
+target_specs <- list(
+  "National (40-Hour)" = "output/unified_target_variable.rds",
+  "ILO Definition"     = "output/ilo_unemployment_quarterly.rds"
+)
+
+comparison_df <- map2_df(names(target_specs), target_specs, function(name, path) {
+  tryCatch(run_importance_pipeline(name, path, features_xts), error = function(e) {
+    message(paste("Skipping missing frame:", name, "-", e$message))
+    return(NULL)
+  })
+})
+
+# ==============================================================================
+# 9. Clear Comparative Importance Visualization
+# ==============================================================================
+
+if (nrow(comparison_df) > 0) {
+  plot_df <- comparison_df |> 
+    filter(direction != "Dropped") |>
+    mutate(
+      # Shorten labels for clean axes presentation
+      feature = case_when(
+        feature == "CPI_MoM"         ~ "CPI (MoM change)",
+        feature == "gdp_growth_yoy"  ~ "Real GDP Growth (YoY)",
+        feature == "d_prime_lending" ~ "Prime Lending Rate Change",
+        feature == "d_max_lending"   ~ "Max Lending Rate Change",
+        feature == "d_savings_rate"  ~ "Savings Rate Change",
+        TRUE ~ feature
+      )
+    )
+
+  p <- ggplot(plot_df,
+              aes(x = reorder_within(feature, rel_importance, target_definition),
+                  y = rel_importance, fill = direction)) +
+    geom_col(width = 0.7, alpha = 0.95) +
+    facet_wrap(~ target_definition, scales = "free_y", ncol = 2) +
+    scale_x_reordered() +
+    scale_fill_manual(values = c("Positive" = "#B23A48", "Negative" = "#2E5C8A")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+    coord_flip() +
+    labs(
+      title    = "Macroeconomic Drivers: National vs ILO Unemployment",
+      subtitle = "Relative permutation importance from Elastic Net (Synchronized Stationary Transformed Series)",
+      caption  = "Panel fit (CV NRMSE): ILO = 0.08 · National (40-hr) = 0.13",
+      x        = NULL,
+      y        = "Relative Importance Score (0-100)",
+      fill     = "Coefficient Sign"
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title         = element_text(face = "bold", size = 13.5, colour = "#111111", margin = margin(b = 4)),
+      plot.subtitle      = element_text(size = 9.5, colour = "#555555", margin = margin(b = 14)),
+      plot.caption       = element_text(size = 8.5, colour = "#777777", hjust = 0, margin = margin(t = 12)),
+      strip.text         = element_text(face = "bold", size = 11.5, margin = margin(t = 6, b = 6)),
+      strip.background   = element_rect(fill = "#f7f7f7", colour = NA),
+      panel.spacing.x    = unit(2, "lines"),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor   = element_blank(),
+      axis.text.y        = element_text(size = 9.5, colour = "#222222"),
+      legend.position    = "bottom",
+      plot.title.position = "plot",
+      plot.margin        = margin(20, 25, 15, 20)
+    )
+
+  ggsave("output/importance_comparison_clean.png", p, width = 12, height = 5.5, dpi = 300, bg = "white")
+  print(p)
+}
+
+
+# ---- Standalone Lag-Only CV Baseline (Differenced Scale) ----
+lag_only_diff_df <- model_df |> 
+  mutate(d_unemployment = unemployment - y_lag4) |>
+  select(time, d_unemployment, y_lag4, y_lag8) |> 
+  filter(if_all(everything(), ~ !is.na(.)))
+
+lag_only_cv <- rolling_origin_enet(lag_only_diff_df, target_col = "d_unemployment", min_train = 30)
+
+lag_metrics <- lag_only_cv |>
+  summarise(
+    rmse  = sqrt(mean((actual - predicted)^2)),
+    mae   = mean(abs(actual - predicted)),
+     nrmse       = sqrt(mean((actual - predicted)^2)) / mean(actual),
+    coverage_90 = mean(actual >= pi_lower & actual <= pi_upper)
+  )
+print(lag_metrics)
+```

@@ -283,9 +283,11 @@ follow up: Generate a larger expanded list
     "jobs in Enugu", "jobs in Owerri", "jobs in Benin",
     "jobs in Warri", "jobs in Ilorin", "jobs in Jos"
 
+# Fetching data
 
 ```{r}
 ddir <- 'data/'
+wdir <- getwd()
 library(gtrendsR)
 
   keywords <- c(
@@ -474,12 +476,7 @@ for (kw in keywords) {
   message(paste("Processing keyword:", kw))
   dir.create(folder_name, recursive = TRUE)
   
-  # -------------------------------------------------------------------------
-  # CRITICAL METHODOLOGICAL FIX: Fetch continuous data (time = "all")
-  # We do NOT loop through time periods. Using "all" retrieves a continuous 
-  # monthly series from 2004-present, ensuring the 0-100 scaling is mathematically 
-  # unified across the entire historical baseline for your machine learning models.
-  # -------------------------------------------------------------------------
+
   message(paste("  Fetching continuous data (time = 'all') for:", kw))
   
   result <- fetch_with_retry(
@@ -564,12 +561,7 @@ for (kw in keywords) {
     
     # Read the mathematically preserved .rds object
     kw_data <- readRDS(file_path)
-    
-    # -------------------------------------------------------------------------
-    # CRITICAL FIX: Clean the 'hits' column BEFORE binding.
-    # We force the column to text, replace the "<1" strings with "0", 
-    # and then permanently coerce the column into a strict numeric format.
-    # -------------------------------------------------------------------------
+  
     kw_data$hits <- as.character(kw_data$hits)
     kw_data$hits <- as.numeric(gsub("<1", "0", kw_data$hits))
     
@@ -583,7 +575,6 @@ for (kw in keywords) {
 }
 
 # 3. Combine the list safely into one massive "long" dataframe
-# Because all 'hits' columns are now strictly numeric, bind_rows will work perfectly.
 gt_combined_long <- bind_rows(loaded_data_list, .id = "Search_Term")
 
 # 4. Pivot to the "Wide" Feature Matrix format required for Machine Learning
@@ -604,6 +595,7 @@ message("Feature matrix successfully built and saved to disk!")
 print(head(gt_feature_matrix))
 ```
 
+# Cleaning and alignment
 
 ```{r}
 # Load required libraries
@@ -623,8 +615,6 @@ unemp_annual <- before_2014 |>
   mutate(Date = as.Date(paste0(Date, "-01-01")))
 
 # 1. Temporal Disaggregation of the Target Variable (Unemployment)
-# We use the Denton-Cholette method, which performs the quadratic minimization 
-# procedure to smoothly interpolate the annual data into a quarterly format.
 disagg_model <- td(unemp_annual ~ 1, to = "quarterly", method = "denton-cholette", conversion = "average")
 before_2014_quarterly <- predict(disagg_model) |>
   head(-1)
@@ -640,21 +630,11 @@ after_2014 <- after_2014 |>
   select(Period, Value) |>
   rename(Date = Period )
 
-# # without comparison 
-# after_2014 <- after_2014 |>
-#   mutate(Value = as.numeric(gsub("%", "",`Unemployment Rate`))) |>
-#   select(Period, Value) |>
-#   rename(Date = Period )
-
 # 2. Converting to a formal Time Series (ts) object
-# We explicitly tell R that this data starts in the 4th quarter of 2014 
-# and has a frequency of 4 (quarterly).
+
 recent_quarterly_ts <- ts(after_2014$Value, start = c(2014, 4), frequency = 4)
 
 # 3. Filling in Missing Quarters (Handling the NAs)
-# Using the forecast package's na.interp() function. 
-# This automatically uses robust interpolation to estimate and fill any NA gaps, 
-# ensuring your quarterly spacing remains perfectly continuous.
 recent_quarterly_clean <- na.interp(recent_quarterly_ts)
 recent_quarterly_clean <- tibble(
   time = as.Date(as.yearqtr(time(recent_quarterly_clean))),
@@ -665,14 +645,17 @@ recent_quarterly_clean <- tibble(
 unified_target_variable <- bind_rows(before_2014_quarterly, 
                               recent_quarterly_clean)
 
-tail(unified_target_variable)                           
+tail(unified_target_variable)    
+
+saveRDS(unified_target_variable, file.path(wdir, 'output/unified_target_variable.rds'))
+# reload with: unified_target_variable <- readRDS("output/unified_target_variable.rds")
 ```
 
 ```{r}
 unified_target_variable |>
   ggplot(aes(x = time, y = value)) +
   geom_line(color = "steelblue", linewidth = 1) +
-  labs(
+  labs( 
     title = "Unemploymennt Rate Over Time",
     x = "Time",
     y = "Value"
@@ -683,6 +666,64 @@ unified_target_variable |>
     axis.text = element_text(size = 10),
     axis.title = element_text(size = 12)
   )
+```
+
+```{r}
+# 1. Load and clean ----
+ilo_raw <- read_csv("data/ilo_unemployment.csv",
+                    show_col_types = FALSE)
+
+ilo_annual <- ilo_raw |>
+  select(time, obs_value) |>
+  arrange(time) |>
+  mutate(time = as.integer(time),
+         obs_value = as.numeric(obs_value))
+
+cat("Annual ILO series:\n")
+print(ilo_annual)
+
+# 2. Convert to ts object for tempdisagg ----
+ilo_ts <- ts(ilo_annual$obs_value,
+             start = min(ilo_annual$time),
+             frequency = 1)
+
+
+# Option A: no indicator — pure smoothing
+td_no_indicator <- td(ilo_ts ~ 1,
+                      to = "quarterly",
+                      method = "denton-cholette",
+                      conversion = "average")
+
+ilo_quarterly_nodind <- as.numeric(predict(td_no_indicator))
+
+# 4. Build the output tibble ----
+quarterly_dates <- seq(as.Date(sprintf("%d-01-01", min(ilo_annual$time))),
+                       by = "3 months",
+                       length.out = length(ilo_quarterly_nodind))
+
+ilo_quarterly <- tibble(
+  time  = quarterly_dates,
+  value = ilo_quarterly_nodind
+)
+
+cat("\nDisaggregated quarterly series:\n")
+print(ilo_quarterly)
+
+# 5. Sanity check: annual means of quarterly values should equal original ----
+sanity <- ilo_quarterly |>
+  mutate(year = year(time)) |>
+  group_by(year) |>
+  summarise(quarterly_mean = mean(value), .groups = "drop") |>
+  left_join(ilo_annual |> rename(year = time, original = obs_value), by = "year") |>
+  mutate(diff = quarterly_mean - original)
+
+cat("\nSanity check (quarterly mean should equal original annual):\n")
+print(sanity)
+
+# 6. Save ----
+dir.create("output", showWarnings = FALSE)
+saveRDS(ilo_quarterly,    "output/ilo_unemployment_quarterly.rds")
+write_csv(ilo_quarterly,  "output/ilo_unemployment_quarterly.csv")
 ```
 
 ```{r}
@@ -804,6 +845,7 @@ GDP_data |>
 
 ```
 
+# Saving data
 ```{r}
 saving_data <- read_csv(file.path(ddir, "savings_rate.csv"))
 
@@ -934,269 +976,41 @@ monthly_CPI |>
   )
 ```
 
-```{r}
-# international rates
-
-int_before_2014 <- before_2014|>
-  select(Date, Value)|>
-  mutate(Date = as.Date(paste0(Date, "-01-01")))
-
-```
 
 ```{r}
-# Load the time-series extension package
 library(xts)
 
-# -------------------------------------------------------------------------
-# 1. CONVERT TO TIME-SERIES OBJECT
-# Convert your new wide feature matrix into a formal 'xts' time-series object.
-# We remove the first column (date) from the data and use it strictly as the time index.
-# -------------------------------------------------------------------------
-gt_monthly_xts <- xts(gt_feature_matrix[, -1], order.by = as.Date(gt_feature_matrix$date))
+# Monthly wide matrix -> xts
+gt_monthly_xts <- xts(gt_feature_matrix[, -1],
+                      order.by = as.Date(gt_feature_matrix$date))
 
-# -------------------------------------------------------------------------
-# 2. TIME-AGGREGATION (MONTHLY TO QUARTERLY)
-# Mathematically aggregate the monthly search volumes into quarterly averages.
-# We use 'colMeans' to prevent the list-coercion errors we resolved previously.
-# -------------------------------------------------------------------------
-gt_quarterly_xts <- apply.quarterly(gt_monthly_xts, colMeans)
+# Aggregate to quarterly means
+gt_quarterly_xts <- apply.quarterly(gt_monthly_xts, colMeans, na.rm = TRUE)
 
-# -------------------------------------------------------------------------
-# 3. TEMPORAL SYNCHRONIZATION
-# The machine learning algorithms require 'x' and 'y' to have the exact same number of rows.
-# We determine the exact number of quarters available in your reconstructed baseline.
-# -------------------------------------------------------------------------
-n_quarters <- nrow(unified_target_variable )
+# Re-stamp index to first-day-of-quarter so it matches script 2's `time` column
+m <- as.integer(format(index(gt_quarterly_xts), "%m"))
+q_first_month <- ((m - 1) %/% 3) * 3 + 1
+index(gt_quarterly_xts) <- as.Date(sprintf("%s-%02d-01",
+                                           format(index(gt_quarterly_xts), "%Y"),
+                                           q_first_month))
 
-# Truncate the Google Trends predictor matrix to exactly match the length of the target variable
-gt_aligned <- gt_quarterly_xts[1:n_quarters, ]
+# Tidy tibble keyed by `time`, with cleaned column names for glmnet safety
+gt_quarterly_df <- gt_quarterly_xts |>
+  zoo::fortify.zoo() |>
+  tibble::as_tibble() |>
+  dplyr::rename(time = Index)
 
-# -------------------------------------------------------------------------
-# 4. FINAL MACHINE LEARNING INPUTS (x and y)
-# Strip away all residual metadata, dimension names, and date formats.
-# Coerce the data into pure, strictly numeric formats to prevent glmnet/XGBoost crashes.
-# -------------------------------------------------------------------------
+# Prefix GT columns so they are identifiable and collision-free after the join
+names(gt_quarterly_df)[-1] <- paste0("gt_",
+  make.names(names(gt_quarterly_df)[-1], unique = TRUE))
 
-# The Target Vector (y)
-y <- as.numeric(unified_target_variable$value)
+dir.create("output", showWarnings = FALSE)
+saveRDS(gt_quarterly_xts, "output/gt_quarterly_xts.rds")
+saveRDS(gt_quarterly_df,  "output/gt_quarterly_df.rds")
+readr::write_csv(gt_quarterly_df, "output/gt_quarterly.csv")
 
-# The Feature Matrix (x)
-x <- matrix(as.numeric(gt_aligned), nrow = nrow(gt_aligned), ncol = ncol(gt_aligned))
-
-# Reattach the specific search terms as column names so you can identify 
-# which keywords the Elastic Net selects during the shrinkage process
-colnames(x) <- colnames(gt_aligned)
-
-# -------------------------------------------------------------------------
-# 5. DIAGNOSTIC CHECK
-# Verify that the structures are perfectly synchronized for your walk-forward validation
-# -------------------------------------------------------------------------
-message("Target vector length (y): ", length(y))
-message("Predictor matrix rows (x): ", nrow(x))
-
-if(length(y) == nrow(x)) {
-  message("SUCCESS: Your matrices are perfectly synchronized and ready for modeling!")
-} else {
-  message("WARNING: Dimension mismatch.")
-}
-```
-
-
-```{r}
-#install.packages('randomForest')
-library(randomForest)
-
-# -------------------------------------------------------------------------
-# AUTOREGRESSIVE FEATURE EMBEDDING
-# -------------------------------------------------------------------------
-
-# 1. Create a lagged version of your target variable (y_t-1)
-# We append an NA at the beginning and drop the last observation to shift the series by one quarter
-y_lag <- c(NA, y[-length(y)])
-
-# 2. Bind the lagged target variable to your existing Google Trends predictor matrix
-# We place it as the very first column so it is easily identifiable 
-x_autoregressive <- cbind(Lagged_Y = y_lag, x)
-
-# 3. Handle the NA introduced by the temporal shift
-# Because there is no historical data prior to your very first quarter, the first row 
-# now contains an NA. We must strictly drop the first row of both x and y so your 
-# glmnet and XGBoost algorithms do not crash.
-x_final <- x_autoregressive[-1, ]
-y_final <- y[-1]
-
-# 4. Diagnostic Check
-message("New target vector length (y_final): ", length(y_final))
-message("New predictor matrix rows (x_final): ", nrow(x_final))
-
-# 2. Stage 2: Data-Driven Feature Selection (Elastic Net)
-# To address the severe multicollinearity and high dimensionality of the 200+ generated search queries, 
-# the Elastic Net penalty (alpha=0.5) is applied to filter the variables and stabilize the coefficients.
-
-# Set seed for reproducibility
-set.seed(2025)
-
-# Fit the Elastic Net model (alpha = 0.5 combines L1 and L2 penalties)
-# cv.glmnet performs k-fold cross-validation to find the optimal lambda penalization
-elastic_net_cv <- cv.glmnet(x_final, y_final, alpha = 0.5, family = "gaussian")
-
-# Extract the optimal lambda that minimizes the Mean Squared Error (MSE)
-optimal_lambda <- elastic_net_cv$lambda.min
-
-# Fit the final Elastic Net model using the optimal lambda
-final_elastic_net <- glmnet(x_final, y_final, alpha = 0.5, lambda = optimal_lambda)
-
-# Extract the non-zero coefficients (the filtered behavioral keywords)
-# NOTE: predict(..., type="nonzero") returns a list. For a single lambda, it is the first element [[2]].
-selected_features_list <- predict(final_elastic_net, type = "nonzero")
-selected_indices <- selected_features_list[[1]]
-x_filtered <- x_final[, selected_indices, drop = FALSE]
-
-# Print the number of selected features to the console
-message("Number of Google Trends keywords selected by Elastic Net: ", ncol(x_filtered))
-
-# ----------------------------------------------------------------------------------
-# 3. Walk-Forward Validation and Reconstruction
-# To rigorously test the out-of-sample predictive power without data leakage, a rolling window 
-# approach is used to sequentially train and test the model. We compare a baseline AR(1) model 
-# against the Google Trends-augmented model.
-# ----------------------------------------------------------------------------------
-
-# Initialize vectors to store the pseudo-out-of-sample forecast errors
-errors_baseline <- c()
-errors_augmented <- c()
-predictions_augmented <- c()
-
-# Set the initial training window size (e.g., first 40 quarters)
-train_size <- 40
-total_obs <- length(y_final)
-
-for (t in train_size:(total_obs - 1)) {
-  
-  # Define rolling training and testing sets
-  y_train <- y_final[1:t]
-  x_train <- x_filtered[1:t, ]
-  
-  y_test <- y_final[t + 1]
-  x_test <- matrix(x_filtered[t + 1, ], nrow = 1)
-  
-  # --- Model A: Baseline Autoregressive Model (ARIMA) ---
-  # Fits a baseline without Google Trends data
-  base_model <- auto.arima(y_train)
-  base_pred <- forecast(base_model, h = 1)$mean
-  errors_baseline <- c(errors_baseline, y_test - base_pred)
-  
-# --- Model B: Augmented Machine Learning Model (Tree-Based: Random Forest) ---
-  
-  # We reattach the column names to x_test so the Random Forest recognizes the variables
-  colnames(x_test) <- colnames(x_train)
-  
-  # Fit the Random Forest model using the Elastic Net-filtered variables
-  # We use 500 trees, which is standard in the literature to ensure convergence
-  aug_model <- randomForest(x = x_train, 
-                            y = y_train, 
-                            ntree = 500, 
-                            importance = FALSE) 
-  
-  # Predict the one-step-ahead out-of-sample value
-  aug_pred <- predict(aug_model, newdata = x_test)
-  
-  predictions_augmented <- c(predictions_augmented, aug_pred)
-  errors_augmented <- c(errors_augmented, y_test - aug_pred)
-} 
-# ----------------------------------------------------------------------------------
-# 4. Evaluation and Statistical Validation
-# To validate whether the digital trace data genuinely improves the reconstruction of the 
-# historical baseline, the forecasting accuracy must be quantified (RMSE, MAE, MAPE) and 
-# the significance of the loss differential tested using the Diebold-Mariano test.
-# ----------------------------------------------------------------------------------
-
-# Calculate Error Metrics: RMSE, MAE, MAPE
-calc_rmse <- function(err) sqrt(mean(err^2))
-calc_mae <- function(err) mean(abs(err))
-calc_mape <- function(err, actual) mean(abs(err / actual)) * 100
-
-actual_test_values <- y[(train_size + 1):total_obs]
-
-cat("Baseline Model - RMSE:", calc_rmse(errors_baseline), 
-    "| MAPE:", calc_mape(errors_baseline, actual_test_values), "%\n")
-    
-cat("Augmented Model - RMSE:", calc_rmse(errors_augmented), 
-    "| MAPE:", calc_mape(errors_augmented, actual_test_values), "%\n")
-
-# Diebold-Mariano Test for Superior Predictive Ability
-# H0: The baseline and augmented models have equal forecast accuracy.
-# HA: The augmented model is more accurate (alternative="greater").
-dm_result <- dm.test(errors_baseline, errors_augmented, 
-                     alternative = "greater", h = 1, power = 2)
-
-print(dm_result)
-```
-
-
-
-```{r}
-
-#install.packages('vars')
-#install.packages('stats')
-# Load the required package
-library(vars)
-library(stats)
-
-best_features <- prcomp(x_filtered, center = TRUE, scale. = TRUE)$x[, 1:2, drop = FALSE]
-# ----------------------------------------------------------------------------------
-# CRITICAL PRE-STEP: Combine your target (y_final) and a SMALL subset of predictors 
-# (e.g., your top 2 Google Trends + Nighttime Lights) into a single multivariate dataset.
-# Assuming 'best_features' is a strictly numeric matrix/dataframe of your top 2-3 variables:
-# ----------------------------------------------------------------------------------
-var_data <- cbind(Unemployment = y_final, best_features)
-
-errors_baseline <- c()
-errors_var <- c()
-predictions_var <- c()
-
-train_size <- 40
-total_obs <- nrow(var_data)
-
-for (t in train_size:(total_obs - 1)) {
-  
-  # Define the rolling training set for the VAR system
-  train_system <- var_data[1:t, ]
-  y_test <- var_data[t + 1, "Unemployment"]
-  
-  # --- Model A: Baseline Autoregressive Model ---
-  base_model <- auto.arima(train_system[, "Unemployment"])
-  base_pred <- forecast(base_model, h = 1)$mean
-  errors_baseline <- c(errors_baseline, y_test - base_pred)
-  
-  # --- Model B: Vector Autoregression (VAR) ---
-  # 1. Automatically select the optimal number of lags (p) for this training window
-  # We use SC (Schwarz/Bayesian Information Criterion) to prevent overfitting
-  lag_selection <- VARselect(train_system, lag.max = 4, type = "const")
-  optimal_p <- lag_selection$selection["SC(n)"]
-  
-  # 2. Fit the VAR model using the dynamically selected optimal lag
-  var_model <- VAR(train_system, p = optimal_p, type = "const")
-  
-  # 3. Forecast 1-step ahead for the entire system
-  var_forecast <- predict(var_model, n.ahead = 1)
-  
-  # 4. Extract only the Unemployment prediction from the multivariate forecast object
-  var_pred <- var_forecast$fcst$Unemployment[1, "fcst"]
-  
-  predictions_var <- c(predictions_var, var_pred)
-  errors_var <- c(errors_var, y_test - var_pred)
-}
-
-# ----------------------------------------------------------------------------------
-# Evaluation
-# ----------------------------------------------------------------------------------
-calc_rmse <- function(err) sqrt(mean(err^2))
-
-cat("\nBaseline ARIMA - RMSE:", calc_rmse(errors_baseline), "\n")
-cat("Endogenous VAR Model - RMSE:", calc_rmse(errors_var), "\n\n")
-
-# Diebold-Mariano Test
-dm_result <- dm.test(errors_baseline, errors_var, alternative = "greater", h = 1, power = 2)
-print(dm_result)
+cat("Saved GT quarterly features:", nrow(gt_quarterly_df), "quarters,",
+    ncol(gt_quarterly_df) - 1, "keywords\n")
+cat("Range:", as.character(min(gt_quarterly_df$time)), "->",
+    as.character(max(gt_quarterly_df$time)), "\n")
 ```

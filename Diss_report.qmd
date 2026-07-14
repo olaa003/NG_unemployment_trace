@@ -1,7 +1,11 @@
 ---
-title: "Beyond the One-Hour Standard: Using Digital Trace Data to Reconstruct Nigeria's Discontinued Unemployment Series"
+title: ""
+
 format:
   pdf:
+    toc: false
+    lof: false
+    lot: false
     pdf-engine: xelatex
     header-includes:
       - "\\usepackage{longtable}"
@@ -17,13 +21,14 @@ format:
       - "\\usepackage[bottom]{footmisc}"  
       # make toc links black
       - "\\usepackage{hyperref}"
-      - "\\hypersetup{colorlinks=true, urlcolor=black, citecolor=black}"
+      - "\\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black, allcolors=black}"
+      - "\\AtBeginDocument{\\hypersetup{hidelinks}}"
+
  
 eval: true   
 echo: false        
 warning: false    
 message: false    
-toc: false
 
 fig-width: 7
 fig-height: 5
@@ -42,172 +47,1762 @@ reference-section-title: "References"
 bibliography: references.bib
 ---
 
-abstract
+```{r}
+#| label: word-count
+#| echo: false
+#| output : false
+#| warning: false
+#| message: false
 
-• Overview of the study • Aim of the study • Reason for the study • Methodology used in the study • Findings in the study
+## ---- word-count -----------------------------------------------------------
+# Counts words in the .qmd source while excluding the YAML header and
+# all code chunks.
+ 
+file_name <- "Diss_report.qmd"
+ 
+if (file.exists(file_name)) {
+  file_content <- readLines(file_name, warn = FALSE)
+ 
+  # 1. Strip YAML header (between the first two "---" lines)
+  yaml_lines <- grep("^---", file_content)
+  if (length(yaml_lines) >= 2) {
+    file_content <- file_content[-(yaml_lines[1]:yaml_lines[2])]
+  }
+ 
+  # 2. Strip code chunks (everything between paired ``` lines)
+  chunk_edges <- grep("^```", file_content)
+  if (length(chunk_edges) > 0 && length(chunk_edges) %% 2 == 0) {
+    chunk_lines <- unlist(lapply(seq(1, length(chunk_edges), by = 2), function(i) {
+      seq(chunk_edges[i], chunk_edges[i + 1])
+    }))
+    file_content <- file_content[-chunk_lines]
+  }
+ 
+  # 3. Drop empty lines and count
+  file_content <- file_content[file_content != ""]
+  text_content <- paste(file_content, collapse = " ")
+  word_count   <- stringr::str_count(text_content, "\\w+")
+ 
+  cat("Estimated Word Count:", word_count)
+}
+ 
+```
+
+\begin{titlepage}
+\centering
+
+\vspace*{2cm}
+
+{\Huge Beyond the One-Hour Standard: Using Auxiliary Data to Reconstruct Nigeria's Discontinued Unemployment Series \par}
+
+\vspace{2cm}
+
+by
+
+\vspace{1cm}
+
+{\Large 72601\par}
+
+\vspace{1cm}
+
+A Capstone Project submitted in partial fulfilment
+of the requirements for the degree of
+MSc Applied Social Data Science
+
+\vspace{1cm}
+
+at
+
+\vfill
+
+Department of Methodology\\
+London School of Economics and Political Science\\
+
+\vspace{1cm}
+
+Supervisor: Tom Robinson
+
+July 2026
+
+Estimated Word Count: `r word_count`
+
+\end{titlepage}
+\newpage
+
+\textbf{Abstract}
+
+The adoption of the International Labour Organization (ILO) definition of unemployment and the consequent discontinuation of domestic measures in many developing countries have attracted substantial criticism, particularly around its limited representation of local labour-market conditions. While there have been theoretical debates on the utility of domestic definitions, few empirical studies have attempted to reconstruct them once they are officially discontinued.
+
+This study addresses that gap by examining Nigeria's recent adoption of the ILO definition. Using machine-learning techniques, it seeks to reconstruct the discontinued domestic unemployment measure from available long-term data series. The research is motivated by the drastic change in reported unemployment rates following the adoption of the new definition.
+
+To achieve this objective, the study compiles administrative and alternative data sources to estimate the previous measure of unemployment. It additionally compares the determinants of both definitions using model coefficients to assess whether their differences extend beyond the effect of arbitrary threshold changes. An elastic net model is adopted as the most appropriate modelling framework within the Nigeria context, specifically, for its unique feature selection and extrapolation abilities. The findings suggest that the previous unemployment definition can be reconstructed with reasonable accuracy for the years examined. However, validation for future periods is not possible because the measure has been discontinued.
+
+More importantly, the results indicate that although both definitions share several common drivers, certain socioeconomic factors influence them differently. These differences suggest that changes in classification thresholds create structurally distinct unemployment metrics.
 
 \clearpage
 
-# Chapter 1
+\newpage
 
-Accurate labor force statistics are essential for several disciplines and policy decisions. The International Conference of Labour Statisticians (ICLS), a technical body of the International Labour Organization (ILO), has since 1923 developed international guidelines to standardize how countries define concepts related to work, employment, and labour statistics. While the conference has produced standards adopted widely across countries, the structural diversity of economies around the world often generates debate when these standards are revised [@brandolini2006; @guataqui2006; @baah-boateng2015; @alenda-demoutiez2020]. A clear illustration of these structural differences can be seen in @tbl-country_minwage, which shows the varying units of works countries use to define their minimum wages — some fixing an hourly rate, others a monthly rate, and some formally recognizing both. This variation is not merely administrative; since the ILO defines employment as work performed for pay or profit, differences in how pay is standardized across countries raise the recurring question of whether a single unemployment standard can be applied uniformly across such diverse labour economies.
+\tableofcontents
 
-Notably, there have been concerns about whether the methodologies and international standards hold in developing countries [@byrne2004]. An interesting case of a recent adoption of these ILO standards is Nigeria. Nigeria is the most populous African country, with 1 in 4 Africans living in the country, and it has seen the most dramatic change in figures upon adoption of the standards. Prior to adopting the official ILO unemployment standard in 2023, Nigeria operated under a domestically adapted definition that classified anyone in the labour force working less than 40 hours in the reference week as unemployed, a threshold later revised downward to 20 hours before the eventual methodological transition. Under this framework, Nigeria recorded an unemployment rate of 33.3% as of Q4 2020. Upon adoption of the ILO definition — which classifies anyone working at least one hour for pay or profit in the reference week as employed — that rate dropped to 5.3% in Q4 2022 [@nationalbureauofstatistics2023].
+\listoffigures
 
-The previous Nigerian development of domestic adaptations of the ILO guidelines exemplifies this structural divergence — a position that was institutionally defended for over a decade, as evidenced by the former Statistician-General's public admission that he resisted adopting the new methodology throughout his tenure [@kale2023; @aro2023]. The direct adoption of the resolution of the 19th ICLS (2013) in 2023 therefore generated significant media interest and public criticism, with some calling for the reversal of the methodology change and others outright dismissing the new figures [@Proshare2023]. This pushback underscores a fundamental concern: that the previous domestic adaptation of the ILO definition was arguably better suited to the economic reality of the Nigerian labour market, where subsistence work and chronic underemployment are pervasive. While it is well-established that digital trace data can be used to nowcast economic indicators in real-time, no research has attempted to use trace data to reconstruct this discontinued employment rate definition.
+\listoftables
 
-This study addresses this gap using Google Trends data—longitudinal records of search query volume over time — which have a well‑established precedent in the labour market nowcasting literature. Askitas and Zimmermann [-@askitas2009] demonstrate strong correlations between keyword searches and unemployment rates in Germany, while Choi and Varian [-@choi2009] show that search interest in unemployment‑related topics can predict changes in labour market conditions. Building on this evidence and on the ILO’s longstanding requirement that unemployment entails active job‑seeking, the study examines whether digital search behaviour can proxy labour market distress in Nigeria, where underemployment is widespread. Specifically, it evaluates whether such data can approximate Nigeria’s discontinued pre‑2023 domestic adaptation of the ILO unemployment definition, enabling an assessment of contemporary labour distress without the distortions introduced by the 2023 methodological shift and improving comparability over time.
+\newpage
+
+# Introduction
+
+## Background and Motivation
+
+Since 1923, the International Conference of Labour Statisticians (ICLS), a technical body of the International Labour Organization (ILO), has worked to develop international guidelines that standardize how countries define concepts related to work, employment, and labour statistics [^1]. While the conference has produced standards adopted widely across countries, the structural diversity of economies around the world often generates debates on their applicability [@brandolini2006; @guataqui2006; @baah-boateng2015; @alenda-demoutiez2020]. A clear illustration of these structural differences can be seen in @tbl-country_minwage, which shows the varying units of works countries use to define their minimum wages — some fixing an hourly rate, others a monthly rate, and some formally recognizing both. This variation is not merely administrative; since the ILO defines employment as work performed for pay or profit, differences in how pay is standardized across countries raise the recurring question of whether a single unemployment standard can be applied uniformly across such diverse labour economies.
+
+[^1]: @tbl-icls-sessions
+
+Notably, there are persistent concerns regarding the applicability of international labour standards in developing economies characterized by high levels of informality, where the consequences of statistical mismeasurement are particularly severe [@byrne2004; @alenda-demoutiez2020]. Scholars and practitioners have extensively debated several core tenets of the standard employment definition to determine their validity in developing contexts. Key contentions include whether an "active job search" should be strictly required to classify an individual as unemployed, and whether the minimum working-hour thresholds accurately reflect labour market realities [@brandolini2006; @hussmanns2007; @byrne2004]. The validity of these debates have been acknowledge by the ILO and broader, composite measures of labour underutilization (LU1–LU4) have sprang up in recent years [@ILO2011; @ilo2023].
+
+The differences in measures resulting from different definitions are significant to policy and national decision making. Nigeria's National Bureau of Statistics (NBS) provides a contemporary case study where this can be explored, having maintained a domestically adapted unemployment definition for over two decade before fully transitioning to the ILO standard in 2023 [@nationalbureauofstatistics2023; @dichotomy2023]. Prior to this methodological shift, Nigeria's NBS operated under a framework that initially classified individuals working less than 40 hours a week as unemployed [@kale2015], a threshold that was later revised downward to 20 hours per week [@nationalbureauofstatistics2021; @kale2015]. Under this stringent domestic framework, Nigeria recorded a headline unemployment rate of 33.3% in the fourth quarter of 2020 [@dichotomy2023; @nationalbureauofstatistics2021].
+
+Following the transition to the ILO definition, which classifies individuals as employed if they worked for at least one hour for pay or profit during the reference week, the reported unemployment rate plummeted to 5.3% in the fourth quarter of 2022 [@dichotomy2023; @nationalbureauofstatistics2023]. This drastic statistical decline was driven almost entirely by the definitional and methodological shift, rather than a substantive improvement in underlying labour market conditions during the intervening period.
+
+Consequently, several stakeholders have publicly criticized the change of methodology and others have outrightly dismissed the new figures [@Proshare2023; @aro2023; @kale2023]. This is consistent with arguements in literature stating that domestically adapted methodologies are arguably better suited to the economic reality of developing labour markets, where informal subsistence work and chronic underemployment are pervasive [@baah-boateng2015; @dichotomy2023].
+
+Despite the widespread recognition that labour market fluctuations are intricately linked to structural macroeconomic indicators and non-traditional data source [@askitas2009; @choi2009] that continues to be available, there has been no empirical attempt to systematically reconstruct the discontinued, domestically adapted employment series to preserve historical continuity.
+
+## Research Question and Scope
+
+The 2023 adoption of the ILO's one-hour employment criterion marked a major break in Nigeria's labour statistics. While the transition improved alignment with international standards, it also resulted in the discontinuation of the unemployment series previously produced under Nigeria's domestic methodology. Consequently, researchers, policymakers, and the public can no longer directly compare contemporary unemployment figures with historical estimates constructed using the earlier framework.
+
+This discontinuity creates two important challenges. First, it limits the ability to assess changes in labour market conditions over time because observed differences in unemployment rates may reflect methodological changes rather than genuine economic developments. Second, it raises broader questions regarding the suitability of international labour standards in economies characterised by high levels of informality and underemployment.
+
+This study addresses these challenges by investigating whether auxiliary data sources can be used to reconstruct Nigeria's discontinued unemployment series. In particular, it examines whether administrative indicators and digital trace data can recover the variation previously captured by Nigeria's domestic unemployment definition.
+
+The primary research question is:
+
+*To what extent can auxiliary socioeconomic indicators and digital trace data accurately reconstruct Nigeria's discontinued unemployment series?*
+
+To answer this question, the study considers three subsidiary questions:
+
+Which socioeconomic and/or digital trace indicators are most predictive of unemployment under Nigeria's discontinued domestic definition?
+
+What modelling framework can be used to learn the discontinued domestic unemployment definition?
+
+How accurately can the machine learning model reconstruct historical unemployment rates using these indicators?
+
+The study focuses on the period for which both unemployment statistics and auxiliary indicators are available, combining administrative macroeconomic data with digital search data. Rather than creating a new independent index for unemployment, the objective of this study is to assess whether discontinued unemployment rate series can be reconstructed in a statistically reliable manner and to explore what such reconstruction reveals about labour market distress in a high-informality economy.
+
+By doing so, the study contributes to both the methodological literature on reconstructing discontinued statistical series and the broader debate regarding the measurement of unemployment in developing economies.
+
+## Contributions
+
+This study contributes to the literature in four ways. First, it develops a framework for reconstructing labour market indicators following major methodological breaks in official statistics. While changes in statistical definitions are common, relatively little attention has been paid to how discontinued series can be systematically recovered to preserve historical continuity and enable longitudinal analysis. By combining macroeconomic indicators with recursive forecasting techniques, this study demonstrates a practical approach for extending discontinued labour market series beyond their official publication period.
+
+Second, the study contributes new empirical evidence from a highly informal labour market context. Most unemployment nowcasting and reconstruction studies have been conducted in advanced economies characterized by formal labour markets and relatively stable statistical definitions. Nigeria provides a substantially different environment, where labour market participation is dominated by informal and survival-oriented activities, making it an important case for evaluating the robustness of reconstruction approaches.
+
+Third, the study provides a direct comparison of the macroeconomic determinants associated with alternative unemployment definitions. Rather than treating unemployment as a fixed statistical construct, the analysis recognizes that different definitions capture different dimensions of labour market distress. Comparing the historical Nigerian definition with the ILO framework allows the study to examine whether different methodological definitions respond similarly to the broader economic conditions.
+
+Finally, the study contributes to broader debates concerning statistical harmonization in developing economies. While internationally standardized indicators facilitate cross-country comparison, they may also obscure locally relevant dimensions of economic hardship. The findings therefore speak not only to unemployment measurement in Nigeria but also to wider questions concerning the balance between international comparability and domestic policy relevance in official statistics.
 
 The remainder of this paper is structured as follows: Section 2 reviews the relevant literature, Section 3 describes the data and methodology, Section 4 presents the results, and Section 5 discusses the findings and concludes.
 
-# Chapter 2
+# Literature Review
 
-This section reviews ILO technical standards alongside academic literature on the reconstruction and estimation of labour market indicators in contexts of sparse or incomplete data. It is structured in five parts. First, it discusses approaches to measuring employment. Second, it examines the use of trace data and household surveys in labour market analysis. Third, it evaluates employment definitions using behavioural data. Fourth, it reviews Nigeria as a contextual case study. Finally, it considers methodological approaches to reconstructing unemployment under data‑constrained conditions.
+This section reviews the difficulties around operationalizing unemployment in developing countries alongside academic literature on the reconstruction and estimation of labour market indicators in contexts of sparse or incomplete data. It is structured in three main parts. First, it discusses debates on the adaptation of ILO standards in developing countries. Second, it reviews Nigeria as a contextual case study. Finally, it examines likely data sources and methodological frameworks to estimate unemployment rates.
 
-## Measuring Employment
+## Measuring Unemployment in Developing Economies
 
-Employment measures do not exist in isolation; they form a fundamental basis for evaluating macroeconomic performance, formulating labour and human resource policies, and designing poverty reduction strategies [@hussmanns2007]. These functions fundamentally shape how such measures are defined and operationalized, as statistical definitions must balance theoretical consistency with practical applicability across diverse labour market contexts.
+The conceptualization and measurement of unemployment have been subjects of intense historical and methodological debate. The earliest efforts to establish international statistical standards for unemployment trace back to 1895, when the International Statistical Institute in Berne attempted to address the non-comparability of unemployment statistics across industrialised European nations [@richardson1992]. Through successive International Conferences of Labour Statisticians (ICLS) shown in @tbl-icls-sessions, particularly the Eighth ICLS in 1954, the modern labour force framework was established. This framework officially defined the unemployed as individuals of working age who are simultaneously "without work," "currently available for work," and "actively seeking work" [@byrne2004; @richardson1992].
 
-The International Conference of Labour Statisticians serves as the primary global forum for developing standardized concepts and methodologies in labour statistics, enabling cross-country comparability, in a manner similar to the coordinating role played by the World Trade Organization in international trade. However, unlike the WTO, whose rules are binding and enforceable, ICLS standards are non-binding, allowing for national adaptation but also introducing inconsistencies that have generated sustained research interest. This dynamic is evident in the case of Colombia, where the adoption of revised unemployment definitions led to significant theoretical and empirical consequences for both the measurement of labour market outcomes and their subsequent interpretation [@guataqui2006]. In this sense, labour statistics are best understood as constructed measures rather than purely objective facts.
+However, the strict application of these criteria generated persistent theoretical contention, leading scholars and national statisticians to question their validity in developing economies [@byrne2004]. Historically, the statistical category of unemployment was constructed to measure labour distress in advanced, industrialized nations where formal wage-labour is the dominant social norm and where safety nets, such as unemployment insurance, allow individuals to visibly engage in active job searching [@benanav2019; @ILO2011]. In Low-Income Developing Countries (LIDCs), these structural conditions are fundamentally absent [@benanav2019] as formal labour exchange channels are limited and comprehensive unemployment benefits are practically non-existent, the vast majority of the population cannot afford to remain completely idle [@baah-boateng2015; @morse1970]. Consequently, when formal jobs are scarce, workers are forced to take up low-productivity, informal survival activities or subsistence agriculture [@benanav2019; @baah-boateng2015].
 
-In response to such definitional changes, a strand of the literature has focused on the backcasting of labour market indicators using alternative or revised definitions, in order to preserve temporal comparability, as reflected in methodologies adopted by the International Labour Organization and the OECD in their modelled and harmonised estimates, underscoring the extent to which measured outcomes are contingent on underlying statistical frameworks [@Ilo_methodology]
+These structural realities have caused researchers and national statistical agencies to conclude that implementing domestically adapted definitions is not merely a deviation from international norms, but a statistically valid and necessary requirement for capturing true economic distress. As strictly applying the ILO's standard criteria in LIDCs can artificially deflate the unemployment rate, creating an "unemployment-informality trade-off" where high levels of precarious employment actively conceal true joblessness [@baah-boateng2015].
 
-## Trace and Survey Data
+Several nations have historically adopted broad, domestic adaptations of unemployment definitions to correct these biases [@alenda-demoutiez2020; @guataqui2006]. For example, in early post-Apartheid South Africa, statisticians consciously defied international conventions to utilize an expanded unemployment indicator; this domestic adaptation was institutionally validated because it corrected the severe gendered and racialized biases of the strict ILO definition, thereby doing justice to the discouraged, marginalized Black population [@alenda-demoutiez2020]. Similarly, Trinidad and Tobago officially dropped the active job search requirement from its national definition, an adaptation empirically validated by research demonstrating that non-searching, marginally attached workers in developing nations possess the same transitional labour market behaviour as active job seekers [@guataqui2006; @byrne2004].
 
-Despite the profound methodological vulnerabilities of household surveys and administrative registers — such as severe publication lags, falling response rates, recall bias, and susceptibility to institutional filtering—these traditional instruments remain the undisputed ground truth in labor economics [@Ilo_methodology]. The official statistics generated by national statistical agencies provide the foundational demographic anchors and structural targets against which all alternative measurements must be calibrated and evaluated [@choi2012; @askitas2009]. High-frequency digital trace data, therefore, is not a substitute for this ground truth; rather, it functions as an advanced modeling tool used to approximate, predict, and dynamically track these official benchmarks in real-time [@ochoa2025; @choi2012].
+The theoretical validity of these domestic adaptations was ultimately recognized by the ILO itself. Acknowledging that the standard unemployment definition could be overly restrictive in certain labour market contexts, the 13th International Conference of Labour Statisticians (ICLS) in 1982 introduced a "relaxation provision" [@hussmanns2007; @richardson1992]. This provision explicitly permitted countries to relax the "seeking work" criterion in situations where labour markets were largely unorganized, where conventional job-search mechanisms were of limited relevance, or where self-employment constituted the dominant form of economic activity [@icls1982; @richardson1992].
 
-The prevailing literature on labor market "nowcasting" explicitly relies on official survey data as the definitive dependent variable or the "label" for algorithmic training. For example, in their foundational work on Google econometrics, Askitas and Zimmermann [-@askitas2009]. Similarly, Nia et al. [-@nia2022] operationalize official survey-based unemployment statistics as the precise mathematical "labels" to train a Principal Component Regression (PCR) model on Twitter sentiment dataIn these predictive frameworks, the trace data acts strictly as an explanatory variable utilized to model the established survey-based reality, rather than to independently redefine what constitutes unemployment
+The ILO additionally addressed these limitations by argumenting the base unemployment measure and introducing several other labour untilization measures to help developing contexts characterized by widespread informality, precarious work, and underemployment [@ILO2011]. These formal altercations and adjustments lend credibility to the need to having different unemployment definitions for less developing economies.
 
-The academic and practical efficacy of digital trace data is entirely judged by how closely it can mirror the survey ground truth. Researchers employ advanced econometric and machine learning models such as ARIMA, VAR, and neural networks, specifically to minimize the prediction error between the high-frequency digital signal and the official survey benchmark [@adu2023; @inganas2023; @choi2009]. For instance, Choi and Varian demonstrate that the inclusion of Google Trends search variables is statistically validated precisely because it significantly reduces the mean absolute error (MAE) when predicting official initial jobless claims, thereby improving the model's fit to the ground truth [@choi2009; @choi2012].
+Despite this institutional flexibility and the acknowledgement that labour market realities differ substantially across countries, the political economy of global statistics — driven by international financial institutions, donor agencies, and the pursuit of cross-country comparability — has often encouraged developing nations to align with standardized international definitions. As a result, domestically adapted measures are sometimes abandoned in favour of harmonized indicators, even when local statisticians argue that such adaptations better reflect national labour market conditions [@alenda-demoutiez2020].
 
-Even in developing contexts characterized by data scarcity, trace data is firmly anchored to official statistics. In Ghana, high-frequency search data is mathematically interpolated against low-frequency World Bank unemployment metrics to establish a reliable temporal model [@adu2023]. Likewise, complex machine learning extrapolations of subnational labor indicators in Colombia are strictly subjected to post-processing alignment, ensuring that the modeled predictions proportionally match the official national totals established by demographic projections and household surveys [@vera-jaramillo2025].
+## Nigeria's Labour Market and Statistical Transition
 
-The relationship between trace and survey data is inherently complementary: the survey data establishes the definitive macroeconomic reality, and the trace data provides the agile behavioral signals required to model it. As Ochoa and Revilla [-@ochoa2025] note, while passively collected digital traces capture immediate online actions, they are fundamentally incapable of verifying offline realities or complex states like total unemployment duration without the anchor of conventional survey questions. To fully capture labor market dynamics, the most effective methodological strategy dictates combining both sources. The true utility of trace data lies in its capacity to dynamically reconstruct and predict the survey-based ground truth, filling the structural and temporal gaps of traditional census data without ever usurping its role as the ultimate measure of the labor market
+Nigeria was historically one of the countries that actively developed a domestic adaptation of the unemployment definition and regularly reviewed it against the realities of its labour market [@kale2015]. In keeping with its statutory mandate, the National Bureau of Statistics (NBS) periodically evaluated its statistical processes to ensure that they reflected the structural characteristics of the Nigerian economy while maintaining alignment with international best practices [@kale2015].
 
-## Evaluating Employment Definitions Using Behavioral Data
+This balancing act between international statistical standardization and local economic realities is not unique to Nigeria. Across the developing world, national statistical agencies have faced difficult choices regarding how labour market concepts should be adapted to account for informality, subsistence work, and weak formal labour market institutions. Different countries have resolved these tensions in different ways. India, for example, has long relied on a more complex "usual activity" framework to capture persistent underemployment and irregular labour force participation within its large informal sector. By contrast, South Africa moved in the opposite direction during the 1990s, replacing a broader unemployment measure with the stricter ILO standard in part to enhance international credibility, despite concerns that the change obscured labour market discouragement rooted in the legacy of apartheid [@alenda-demoutiez2020].
 
-The theoretical basis for which I am attempting to reconstruct the previous employment definition using behavioral data rests fundamentally on the ILO’s own strict requirement: to be classified as unemployed, individuals must be actively seeking work [@hussmanns2007; @richardson1992]. However, while traditional household surveys may struggle to capture this continuous effort objectively due to recall bias, high-frequency digital trace data provides a precise, passive behavioral signal of job-seeking intensity in the population [@ochoa2025]. Search activity for employment-related terms on platforms like Google effectively operationalizes this active-search criterion, leaving a digital footprint that reflects actual labor market distress [@askitas2009].
+Nigeria's experience sits within this broader debate between local relevance and international comparability. Like several other developing countries, Nigeria historically maintained a domestically adapted unemployment framework designed to better reflect the realities of its labour market. However, its eventual transition to the ILO standard represents one of the most significant methodological shifts observed in recent years.
 
-In the Nigerian context, this behavioral signal serves as a critical tool for evaluating competing employment thresholds. The recent institutional shift by the National Bureau of Statistics (NBS) to a strict 1-hour employment standard mathematically classifies virtually any economic activity as employment @dichotomy2023. Yet, this inclusive standard sharply conflicts with real-world labor dynamics; it artificially masks Nigeria's high incidence of underemployment and poverty, where workers are forced into marginal survival activities due to a lack of social safety nets. Underemployed workers who are digitally connected possess both the acute economic incentive and the opportunity to engage in repeated job searches. Because their current employment — whether 1 hour or 15 hours a week — is fundamentally insufficient for survival, it generates continuous periods of active job-seeking behavior. Consequently, there is a strong theoretical expectation that unemployment measured using a more robust historical baseline, such as the discontinued 40-hour work-week threshold, will be significantly more reflective of actual digital search activity than the 1-hour standard [@nationalbureauofstatistics2021; @nationalbureauofstatistics2023]. The broader 40-hour definition inherently captures the vast pool of underemployed individuals who are actively searching for adequate wage jobs, aligning perfectly with the behavioral signals captured by Google Trends.
+Prior to 2014, the NBS classified individuals working fewer than 40 hours per week as unemployed [@kale2015]. Following a review of labour market conditions, the agency revised this framework to better reflect the growing importance of informal service and agricultural activities. Under the revised methodology, individuals working between 20 and 39 hours per week were classified as underemployed, while those working fewer than 20 hours were classified as unemployed [@kale2015]. This approach effectively used a relatively high work-hour threshold as a proxy for adequate labour market engagement in an economy where formal wage employment accounts for only a small share of total employment [@dichotomy2023]. Under this framework, Nigeria's headline unemployment rate reached 33.3% in the fourth quarter of 2020 [@dichotomy2023; @nationalbureauofstatistics2023].
 
-If digital search behavior aligns more closely with this broader unemployment concept, it empirically validates that the 40-hour threshold possesses greater explanatory power for true labor deprivation in developing economies like Nigeria [@pavlicek2015] Ultimately, this alignment provides the necessary methodological basis for utilizing digital trace data not to replace demographic surveys, but to model and reconstruct a consistent longitudinal unemployment series under the useful but discontinued methodology, thereby circumventing the statistical distortions introduced by the 1-hour standard [@pavlicek2015].
+Importantly, these domestic statistics did not exist in isolation from international comparisons. For many years, the International Labour Organization (ILO) produced modelled unemployment estimates for Nigeria alongside the country's official figures [@Ilo_methodology]. These estimates applied the ILO's standard labour force framework, which classifies individuals as employed if they perform at least one hour of work for pay or profit during the reference period. Designed to maximize international comparability and capture all forms of economic activity, including informal and part-time work, the ILO estimates consistently reported substantially lower unemployment rates for Nigeria, typically ranging between 3.7% and 5.7%.
 
-## Nigeria as a case
+The existence of these modelled estimates meant that internationally comparable unemployment indicators were already available prior to 2023. Nevertheless, in 2023 the NBS formally adopted the ILO methodology as its official unemployment measure and simultaneously introduced the broader labour underutilization framework, including LU2–LU4 indicators [@nationalbureauofstatistics2023]. While these measures provide additional information on labour market conditions, they are conceptually distinct from Nigeria's former domestic unemployment series.
 
-The redefinition of unemployment is not unique to Nigeria; it is a global phenomenon driven by the profound tension between international statistical standardization and local economic realities. As Alenda-Demoutiez and Mügge [-@alenda-demoutiez2020] demonstrate, South Africa shifted from a broad, locally representative unemployment measure in the 1990s in favor of the strict ILO standard purely to signal international economic credibility, despite widespread criticism that the narrow definition obscured the systemic discouragement legacy of apartheid. Similarly, India's complex labor force surveys rely on a 365-day "usual activity" framework to capture the intricate time-disposition and underemployment of its vast informal sector [@richardson1992]. However, among these global transitions, Nigeria’s recent definitional shift represents arguably the most dramatic methodological rupture with the previous series completely discontinued, providing a critical testing ground for the utility of behavioral trace data.
+As a result, the methodological transition did more than alter the official unemployment rate; it also discontinued the series that had previously been used to measure labour market distress under Nigeria's higher work-hour threshold. This created a break in the historical record, limiting the comparability of post-2023 unemployment figures with earlier estimates and creating a challenge for researchers seeking to evaluate long-run labour market trends.
 
-In 2023, the Nigerian National Bureau of Statistics (NBS) transitioned to the strict 1-hour ILO standard, causing the official headline unemployment rate to artificially plummet from 33.3% in Q4 2020 to just 5.3% in Q4 2022 and 4.1% in Q1 2023 [@nationalbureauofstatistics2023]. This extreme statistical drop does not reflect a sudden economic miracle, but rather a fundamental clash of concepts. The pre-2023 domestic framework deliberately classified individuals working 1 to 19 hours a week as unemployed, effectively utilizing a 20-hour baseline to proxy "adequate employment" in an economy where formal wage jobs account for barely 11.8% of the market [@dichotomy2023]. By contrasting this with the new 1-hour standard—which measures mere survival or "any economic activity" — the revised statistics mathematically mask the vast population of underemployed Nigerians. This creates a severe dichotomy, highlighting the paradox of an officially low unemployment rate coexisting with high systemic poverty [@dichotomy2023].
+## Reconstructing the Unemployment Rate in Data-Sparse Contexts
 
-Consequently, utilizing internet nowcasting to evaluate these definitions in the Nigerian context presents severe structural challenges. First, Nigeria's labor market is overwhelmingly dominated by informal employment, which consistently exceeds 92% [@nationalbureauofstatistics2021]. With over 73% of employed individuals operating their own businesses or engaging in farming activities, traditional online job-seeking mechanisms may not perfectly capture the informal realities of the broader workforce. Second, the digital divide poses a significant constraint, with internet penetration around 50% [@industry], the digital footprint disproportionately reflects the experiences of urban, connected job seekers rather than the entire national labor force.
+The reconstruction of discontinued or missing macroeconomic series is a fundamental challenge in applied economics, particularly in developing nations where statistical agencies frequently alter methodologies or suffer from survey gaps. When a historical unemployment series is discontinued or measured infrequently, economists must estimate the missing data to preserve historical comparability and accurately evaluate long-term policy impacts [@vera-jaramillo2025]. The academic literature on reconstructing the unemployment rate has evolved significantly, shifting from traditional econometric models anchored in macroeconomic theory to modern, computational frameworks that integrate high-frequency alternative data and machine learning. This section reviews the data sources, methodological arguments, and theoretical expectations that underpin the reconstruction of labor market indicators.
 
-Yet, despite these structural downsides, digital trace data remains a crucial option to bridge the methodological change. As established, the goal of utilizing high-frequency search data is not to substitute the demographic ground truth of the entire survey population, but rather to model and approximate specific behavioral signals of distress. Because approximately one-third of employed Nigerians work less than 40 hours per week these connected, underemployed individuals possess the acute economic incentive to continuously search for better, formal wage jobs.
+### Macroeconomic Anchors and Structural Modeling
 
-Therefore, digital search behavior successfully operationalizes the broader, 40-hour domestic concept of labor deprivation. Even within formal or urban constraints, utilizing this trace data provides the only objective, longitudinal mechanism capable of reconstructing Nigeria’s discontinued unemployment series, thereby circumventing the statistical distortions introduced by the 1-hour international standard.
+The traditional approach to estimating or forecasting missing unemployment data relies on established structural relationships within the macroeconomy. The foundational expectation is that labor market fluctuations do not occur in a vacuum; they are intrinsically linked to aggregate output and price levels. Researchers have historically utilized Okun’s Law, which posits an inverse relationship between real GDP growth and unemployment, and the Phillips Curve, which describes the trade-off between inflation and unemployment, as primary theoretical anchors [@abiodun2025; @ball2019; @ojapinwa2013]. Because data such as the Consumer Price Index (CPI), Gross Domestic Product (GDP), and industrial production indices are routinely collected with higher frequency and consistency than labor force surveys, they serve as reliable covariates to model missing unemployment trends [@abiodun2025; @ball2019].
 
-## Reconstructing unemployment
+Furthermore, researchers argue that monetary policy transmission channels provide excellent leading indicators for labor absorption. In Nigeria, for example, composite leading indicators (CLI) utilizing high-frequency financial data — such as broad money supply (M2), nominal exchange rates, maximum lending rates, and inter-bank rates — have been proven to accurately trace and forecast unemployment cycles and turning points [@essien; @tule2016]. The expectation in structural modeling is that by capturing the broader macroeconomic environment, one can reliably estimate the trajectory of labor distress [@tule2016]. However, the limitation of this approach is that administrative macroeconomic series often lack the granularity to capture sudden, high-frequency behavioral shifts in the labor market, particularly within the informal sector [@vera-jaramillo2025].
 
-When national statistical agencies fundamentally alter their measurement criteria such as transitioning from a domestic definition to a strict 1-hour ILO standard, they artificially rupture longitudinal data series. While traditional statistical imputation methods, such as sequential regression multivariate imputation (SRMI), are effective for addressing minor missing variables within a continuous dataset [@vermaak2012] they are entirely inadequate for bridging massive, deliberate methodological breaks. Consequently, the integration of high-frequency digital trace data with advanced machine learning and econometric modeling provides a robust, necessary mechanism to reconstruct these discontinued series.
+### Digital Trace Data and Labour Market Measurement
 
-Rather than attempting to replace the household survey, researchers utilize trace data strictly as an explanatory variable to model the established survey-based ground truth [@askitas2009]. A diverse array of forecasting models — ranging from traditional time-series methods like Autoregressive Integrated Moving Average (ARIMA) and Vector Autoregression (VAR) to advanced machine learning algorithms such as Neural Network Autoregression (NNAR), Random Forest, Ridge Regression, and XGBoost — are employed to establish statistical relationships between digital search behaviors and official unemployment rates [@adu2023; @davidescu2021; @xu2013].
+The increasing availability of digital trace data has created new opportunities for measuring economic activity in near real time. Among the most widely studied sources of digital trace data are internet search queries, which record the information-seeking behaviour of individuals as they interact with search engines. A growing body of literature argues that changes in labour market conditions generate observable changes in online search activity, allowing search data to complement traditional labour market statistics [@askitas2009; @choi2009].
 
-The scientific efficacy of these reconstruction models is rigorously evaluated by their capacity to mirror the historical survey baseline. Empirical evidence consistently demonstrates that incorporating Google Trends or other digital footprints into predictive models significantly reduces the Mean Absolute Error (MAE) and substantially improves forecasting accuracy compared to baseline models that lack behavioral data [@choi2012; @pavlicek2015; @xu2013]. By passively recording the continuous effort of job-seeking, trace data captures the underlying behavioral momentum of the labor market, allowing algorithms to accurately project historical definitions forward.
+The theoretical basis for this approach is behavioural. Individuals experiencing unemployment, underemployment, or economic insecurity often alter their information-seeking behaviour by searching for employment opportunities, government support programmes, income-generating activities, or other resources directly or indirectly associated with labour market distress. These behavioural responses create digital footprints that can be aggregated and analysed at scale [@pavlicek2015; @askitas2015].
 
-Crucially, these predictive frameworks have proven exceptionally capable of capturing structural shocks and reconstructing labor indicators where official data is either missing, fragmented, or heavily distorted. For example, Principal Component Regression (PCR) models utilizing social media sentiment and keyword frequencies successfully nowcasted unemployment rates during the abrupt labor market disruptions of the COVID-19 pandemic, bypassing the severe delays and limitations of traditional census methods [@nia2022]. Similarly, sophisticated deep learning pipelines and temporal disaggregation techniques have been utilized to synthetically reconstruct missing subnational labor indicators over decades, enforcing strict demographic anchors and labor accounting identities to ensure total mathematical consistency with national aggregates [@vera-jaramillo2025].
+Early studies demonstrated that internet search activity could improve forecasts of labour market indicators. Askitas and Zimmermann [-@askitas2009] found that search queries related to employment significantly improved unemployment forecasting in Germany, while Choi and Varian [-@choi2009] showed that Google Trends data enhanced short-term prediction of unemployment claims in the United States. Subsequent research has extended these findings to a variety of contexts, suggesting that search activity can provide valuable information about labour market dynamics before official statistics become available [@pavlicek2015].
 
-In the specific context of evaluating employment definitions, this modeling approach is essential for restoring longitudinal consistency. When applied to Nigeria, where the 2023 methodological shift to the 1-hour standard mathematically erased millions of underemployed individuals from the headline statistics [@nationalbureauofstatistics2023], trace data acts as an objective bridge. By calibrating digital search behavior against the discontinued pre-2023 methodology (which effectively approximated a 40-hour baseline), researchers can successfully reconstruct the historical unemployment series. This synthetic reconstruction allows policymakers to evaluate contemporary labor distress using a metric that genuinely reflects the historical series they are more familar with, completely circumventing the statistical problems introduced by the newly adopted international standard.
+More recent studies have explored the application of digital trace data in developing economies. Evidence from countries such as Ghana and Turkey suggests that internet search activity may provide useful signals regarding labour market conditions, particularly when official statistics are infrequent or subject to publication delays [@adu2023; @gayaker2025]. These findings have contributed to a growing literature on economic nowcasting that combines traditional macroeconomic indicators with alternative digital data sources.
 
-# Methodology
+However, important limitations remain. Critics argue that internet search data is not derived from a probabilistic sample of the population and therefore suffers from significant selection bias [@mulero2023]. Search activity tends to overrepresent younger, urban, and more educated individuals while underrepresenting rural populations and groups with limited internet access. This concern is particularly acute in low-income developing economies where internet penetration remains uneven.
 
-While the prevailing nowcasting literature primarily leverages high-frequency digital trace data to circumvent publication delays and predict contemporaneous unemployment [@pavlicek2015; @choi2012], this study confronts a fundamentally different methodological challenge: longitudinal reconstruction. In 2023, the Nigerian National Bureau of Statistics (NBS) introduced a severe methodological rupture by adopting the strict ILO 1-hour employment standard, which mathematically erased millions of underemployed individuals from headline statistics and fractured the historical time series [@dichotomy2023]. Consequently, this approach does not merely aim to estimate real-time labor market tightness; rather, it utilizes stable digital search behavior as an objective explanatory variable to project the discontinued 40-hour domestic unemployment definition forward into 2025.
+A second challenge relates to labour market structure. In economies characterized by extensive informal employment, traditional job-search mechanisms often play a limited role in labour market matching. Individuals engaged in subsistence agriculture, informal trading, or family enterprises may not rely on internet searches when seeking economic opportunities. Consequently, digital trace data may fail to capture important dimensions of labour market activity that are observable through household surveys [@damuri; @mulero2023].
 
-To successfully reconstruct this fractured series, the methodology must accurately track unemployment variations over time, empirically link objective job-search intensity to labor deprivation, and rigorously test out-of-sample prediction accuracy. A robust body of literature provides the necessary modeling precedents. Traditional univariate and multivariate time-series frameworks, such as ARIMA, ARIMAX, and Vector Autoregression (VAR), are widely employed to establish baseline statistical relationships between Google Trends data and official unemployment metrics, consistently demonstrating that the inclusion of behavioral search signals significantly reduces prediction errors [@adu2023]. Furthermore, advanced algorithmic approaches—including Neural Network Autoregression (NNAR), Support Vector Regressions (SVR), and ensemble machine learning methods like Random Forest and XGBoost—exhibit superior capability in capturing the complex, non-linear dynamics inherent in modern labor markets [@davidescu2021; @xu2013; @krishnamurthy]. However, because these established models are overwhelmingly optimized for timeliness rather than historical continuity, this study adapts these frameworks specifically for bridging institutional gaps in statistical measurement. The central methodological test is to examine whether digital search patterns that accurately modeled Nigeria's 40-hour threshold between 2004 and 2020 possess the robust explanatory power required to consistently forecast what that discontinued definition would reflect in 2025, effectively bypassing the methodological distortions introduced by the new 1-hour baseline.
+The literature also highlights considerable variation in approaches to keyword selection. Researchers have employed strategies ranging from simple intuition-driven keywords to algorithmic expansion using related search terms, behavioural categorization, and machine learning-based feature construction [@smith2016; @yi2021; @grybauskas2023]. While no single approach has emerged as universally superior, the broader consensus suggests that careful feature selection is critical for extracting meaningful economic signals from search data.
 
-## Keyword Selection Strategy
+Overall, existing evidence suggests that digital trace data can provide valuable supplementary information for labour market measurement. Nevertheless, relatively little research has examined diverse methodological approaches and whether such data can be used to reconstruct discontinued unemployment series in highly informal economies. The present study contributes to this literature by evaluating whether digital trace data, when combined with traditional socioeconomic indicators, can be used to reconstruct Nigeria's discontinued unemployment series and what keyword selection strategy can be further explored.
 
-The efficacy of any behavioral prediction model depends fundamentally on the accurate operationalization of "job search effort" through keyword selection. Within the established literature, keyword selection strategies vary significantly, ranging from broad, automated aggregations to highly targeted semantic choices. Foundational models often rely on broad, predefined category indices — such as Google Trends' "Jobs" and "Welfare & Unemployment" categories—to capture generalized labor market distress [@choi2012]. Conversely, other researchers adopt highly comprehensive, multidimensional approaches utilizing hundreds of behavioral search terms optimized through complex feature selection algorithms and principal component analysis to reduce dimensionality [@inganas2023; @xu2013].
+### Modern Computational Frameworks: Temporal Disaggregation and Machine Learning
 
-Yet, in developing labor markets characterized by vast informality, the most effective strategies often distill this behavioral footprint into a concise set of culturally relevant terms that directly reflect the localized reality of job-seeking. For instance, researchers successfully nowcasted Ghanaian unemployment by filtering high-frequency query data down to specific, intent-driven phrases such as "jobs in Ghana" and "how to make money" [@adu2023]. By passively recording these objective digital traces, the chosen keyword strategy must accurately proxy the continuous search effort of the underemployed population. By ensuring the selected keywords capture actual labor distress, the resulting behavioral signal can genuinely approximate and reconstruct the abandoned 40-hour historical survey ground truth.
+Recognizing the limitations of both low-frequency macroeconomic data and biased digital trace data, the frontier of labor market reconstruction has shifted toward integrated, multivariate machine learning frameworks. Modern researchers argue that accurate reconstruction requires combining diverse auxiliary datasets; ranging from macroeconomic indicators to passive spatial data, and enforcing strict statistical accounting identities [@vera-jaramillo2025].
 
-However, as demonstrated by the methodological progression in the field, traditional manual keyword selection risks severe researcher bias and incomplete behavioral coverage [@inganas2023]. To circumvent these limitations and accurately model the discontinued 40-hour unemployment baseline, this study adopts a robust two-stage approach combining automated generation with rigorous empirical validation.
+To bridge the gap between annual aggregates and monthly fluctuations, scholars frequently employ temporal disaggregation techniques, such as the Chow-Lin or Denton methods, which use high-frequency auxiliary variables (like monthly exchange rates or CPI) to accurately interpolate missing intra-year labor data [@adu2023; @vera-jaramillo2025]. Once the data is temporally aligned, supervised machine learning algorithms—such as Random Forests, XGBoost, and Ridge Regression—are deployed to capture the complex, non-linear dynamics between the auxiliary predictors and the labor market [@krishnamurthy]. For instance, a recent study reconstructing subnational labor indicators in Colombia successfully integrated temporal disaggregation with deep learning and tree-based models, utilizing a matrix of demographic, institutional, and macroeconomic covariates to estimate employment and informality in regions completely lacking direct survey coverage [@vera-jaramillo2025].
 
-*Stage 1: Automated Keyword Generation* Because researchers cannot reliably predict all relevant search terms across diverse demographic and socioeconomic groups, relying on manual brainstorming inevitably omits critical behavioral signals. To tackle this, this study employs a Large Language Model (LLM)—specifically Google’s Gemini 3 Pro—to generate an exhaustive, multidimensional list of job-search keywords explicitly contextualized to the Nigerian labor market.
+The prevailing expectation in contemporary literature is that ensemble machine learning models, when strictly calibrated against demographic benchmarks and macroeconomic realities, can effectively reconstruct discontinued or missing labor series [@krishnamurthy; @vera-jaramillo2025]. 
 
-This automated approach is methodologically justified for two reasons. First, the model's large context window allows it to process detailed prompts regarding the specific nuances of Nigeria’s informal and underemployed labor dynamics. Second, because the model is trained extensively on search data, it possesses an inherent capacity to identify complex, localized search trends and colloquialisms related to labor distress that human researchers might overlook. By spotting these patterns across large text collections, the LLM successfully operationalizes the broad spectrum of actual job-seeking behavior without being constrained by Western-centric assumptions.
+# Data and Methodology
 
-*Stage 2: Data-Driven Feature Selection* The automated generation yields an expansive raw feature set of over 200 candidate keywords. However, modeling this against the historical survey ground truth—which comprises only 68 quarterly observations between 2004 and 2020—introduces a highly complex prediction problem. As noted in the literature, introducing a massive number of explanatory search variables without disciplined reduction leads to severe overfitting and multicollinearity [@inganas2023]. For example, Mulero and García-Hiernaux [-@mulero2023] explicitly addressed this by applying dimensionality reduction techniques to condense 163 search queries into a manageable set of regressors.
+This section outlines the empirical strategy and computational framework utilized to reconstruct the discontinued high-threshold unemployment series. It details the data selection process, the feature selection strategy, the choice of the predictive algorithm, and the evaluation framework.
 
-Building upon this necessity for dimensionality reduction, this study employs elastic net regularization (α=0.5) to systematically filter the candidate keywords. Because elastic net integrates both L1 and L2 penalties, it resolves three critical statistical challenges simultaneously [@friedman2010]:
+## Data Sources
 
-1.  Objective Variable Selection: The L1 penalty forces the coefficients of irrelevant or noisy keywords to exactly zero. This isolates the precise behavioral signals that possess true explanatory power for the historical 40-hour baseline, discarding terms that are merely coincidentally correlated.
+### NBS Labour Statistics
 
-2.  Mitigating Multicollinearity: Search behavior is inherently highly correlated (e.g., searches for “jobs in Lagos” and “Lagos employment” move simultaneously). While pure LASSO (α=1) struggles with highly correlated variables, the L2 (ridge-style) penalty keeps the coefficients of these related terms stable, preventing erratic model behavior.
+In the case Nigeria, there are two potential unemployment thresholds to reconstruct: the historical 40-hour benchmark or the 20-hour operational definition introduced during the 2014 methodological review [@kale2015]. From 1999 to 2014, the National Bureau of Statistics (NBS) exclusively reported the 40-hour definition. Following the 2014 revision, the NBS continued to dual-report the 40-hour data alongside the new 20-hour metric and total labour force figures, allowing for seamless conversion to the previous baseline [@nationalbureauofstatistics2016; @kale2015]. Because the 40-hour threshold provides a consistent, unbroken metric across the entire historical span up to the 2020 discontinuation, it is selected as the preferred target variable to be modelled in this study.
 
-3.  Handling Group Structures: The combined penalties yield significantly more stable selections when predictors naturally group together, maintaining the structural integrity of the behavioral data.
+### Data Construction
 
-Conclusion By generating broadly and then selecting rigorously, this two-stage methodology maximizes the coverage of actual labor market distress while maintaining strict statistical discipline. It ensures that the final behavioral model is not an arbitrary compilation of search terms, but rather an empirically validated predictive tool uniquely calibrated to reconstruct the "numerical reality" [@fox2013] of Nigeria's discontinued 40-hour unemployment series.
+The primary dataset consists of macroeconomic, monetary, and labour-market indicators collected from the National Bureau of Statistics (NBS) database and the Central Bank of Nigeria (CBN) official statistical database. Key variables include the Consumer Price Index (CPI), savings rate, prime and maximum lending rates, Gross Domestic Product (GDP), and their lagged values.  Complementary UK indicators—such as GDP, inflation, and unemployment—were accessed via the Office for National Statistics (ONS) and the Bank of England, with some series retrieved through the Federal Reserve Bank of St. Louis’s FRED database, which republishes ONS and Bank of England data for international comparability. These indicators were selected based on both theoretical and empirical evidence linking macroeconomic conditions, monetary policy, and labour market outcomes [@ojapinwa2013; @tule2016; @umoru2013]. They were further validated in modelling.
 
-## The Modelling Approach: Reconstructing a Discontinued Series
+In addition to conventional socioeconomic indicators, the study explored the use of digital trace data obtained from Google Trends through the API. The inclusion of search query data was motivated by a growing literature demonstrating the value of digital behavioural signals for labour market nowcasting and unemployment forecasting [@choi2009; @askitas2009; @adu2023]. Google trends data, particularly, was selected as it is the largest search engine and the only platform which provides access to its aggregated search data.
 
-Most literature on digital trace data focuses on "nowcasting". Nowcasting predicts current economic indicators to mitigate publication lags. This study faces a different econometric challenge. The Nigerian National Bureau of Statistics (NBS) abandoned the 40-hour employment threshold in favor of the strict 1-hour standard. The goal is to project a discontinued historical relationship forward across this institutional rupture. The modelling approach must track complex variations over time. It must link stable search intensity to labor deprivation. It must also generalize accurately beyond the original training sample.
+However, the Google Trends database only provides consistent observations from 2004 onward. Consequently, including these data in the modelling would require the exclusion of all earlier observations. Given that the primary objective of this study is the long-term reconstruction of a discontinued unemployment series, restricting the analysis to the post-2004 period would substantially reduce the available historical sample and limit the assessment of model performance across different economic cycles. Consequently, two modelling frameworks were considered: (1) a baseline framework relying exclusively on macroeconomic and labour-market indicators and (2) an extended framework incorporating digital trace variables. This approach allows the study to evaluate the incremental contribution of digital trace data while preserving the longer historical series required for reconstruction.
 
-*Limitations of Linear Models* Researchers traditionally use linear time-series models to evaluate search data. Adding Google Trends data to Autoregressive Integrated Moving Average (ARIMA) and Vector Autoregression (VAR) models reduces Mean Absolute Error (MAE) [@adu2023]. It improves forecasting accuracy compared to baseline models. However, linear models assume linear dynamics. They struggle with the structural shifts of developing labor markets [@krishnamurthy; @vera-jaramillo2025]. Standard ARIMA models also overfit high-dimensional internet search data [@adu2023]. They are suboptimal for bridging massive methodological gaps.
+## Data Processing
 
-*The Machine Learning and Regularization Solution* Machine learning algorithms overcome the limitations of linear models. Algorithms like Random Forest, Ridge Regression, and XGBoost capture non-linear structural behaviors. They generalize complex patterns [@krishnamurthy]. Search engine query data introduces high dimensionality and severe multicollinearity. Related search terms move simultaneously. Models must use strict regularization to maintain statistical discipline. Ridge Regression (L2 regularization) resolves multicollinearity. It penalizes model complexity. It retains all features but shrinks correlated coefficients. This prevents erratic model behavior. Regularization isolates the precise behavioral signals that explain the data. It discards coincidentally correlated terms.
+### Automated Feature Selection and Dimensionality Reduction
 
-*Reconstruction and Temporal Splicing* These advanced models enforce historical continuity. Researchers combine machine learning frameworks with temporal disaggregation to reconstruct absent labor indicators. For example, Vera-Jaramillo [-@vera-jaramillo2025] used XGBoost and deep neural networks to reconstruct missing subnational labor indicators in Colombia. The models linked fragmented historical surveys to stable, high-frequency auxiliary data. This study adopts a similar approach. The predictive model learns the relationship between digital search behavior and the 40-hour threshold during the 2004–2020 period. Regularized regression algorithms identify robust underlying behavioral structures. This framework projects the behavioral momentum of the underemployed population forward into 2025. It synthesizes accurate estimates of the discontinued 40-hour definition. This bypasses the statistical distortions introduced by the 1-hour standard.
+The literature provides no universally accepted procedure for selecting unemployment-related search terms. Existing studies employ approaches ranging from manually selected keywords based on economic theory to large-scale algorithmic expansion using related search queries [@smith2016; @yi2021]. Given the exploratory nature of this study and the limited evidence available for Nigeria, a hybrid feature-construction framework was adopted.
 
-## Evaluation of Model and Validation Strategy
+The process consisted of two stages. In the first stage, a Large Language Model (LLM) was used to generate candidate search terms associated with unemployment, underemployment, job search behaviour, income insecurity, economic hardship, migration, and related dimensions of labour market distress. The objective was not to identify predictors directly but to construct a broad theoretical search space informed by existing literature and contextual knowledge of the Nigerian labour market.
 
-To ensure the reconstructed 40-hour unemployment series accurately reflects true labor dynamics rather than mere statistical noise, the predictive models must be subjected to rigorous out-of-sample evaluation.  Because time-series data possesses inherent temporal dependencies, traditional random data splitting is methodologically inadequate. Instead, the models must utilize a rolling window or walk-forward validation strategy [@choi2012; @inganas2023]. This technique simulates real-world forecasting by progressively expanding the training set over time and calculating sequential pseudo-out-of-sample predictions By evaluating the model across varying historical periods, this approach confirms whether the digital search signals maintain their predictive stability and structural integrity over time.
+In the second stage, Google Trends data were collected for the candidate terms and subjected to automated dimensionality reduction. Because search queries frequently exhibit high levels of collinearity and redundancy, feature selection and dimensionality reduction procedures were applied to retain only variables containing useful predictive information. Consistent with recommendations in the forecasting literature, regularization-based methods were employed to reduce model complexity and mitigate overfitting [@yi2021].
 
-The forecasting accuracy of the machine learning models must be quantified using established econometric error metrics. The prevailing nowcasting literature relies primarily on the Root Mean Square Error (RMSE), Mean Absolute Error (MAE), and Mean Absolute Percentage Error (MAPE) to assess model fit against the survey ground truth [@davidescu2021; @nia2022; @xu2013]. While RMSE is highly effective at penalizing large prediction variances by squaring the errors [@krishnamurthy], MAPE is particularly critical for this longitudinal reconstruction [@davidescu2021; @inganas2023]. Because MAPE expresses the prediction error as a unit-free relative percentage, it provides a scale-independent metric that allows researchers to objectively compare forecast accuracy across different models and economic cycles.
+The resulting digital trace variables were integrated with traditional socioeconomic indicators, including macroeconomic and labour market measures, to create a unified modelling dataset. This combined dataset formed the basis for subsequent machine learning analyses.
 
-However, simply observing a reduction in the absolute error is insufficient to validate the behavioral model. To rigorously determine whether the inclusion of high-frequency search data genuinely improves the reconstruction of the historical baseline, the statistical significance of the forecast improvement must be tested using the Diebold-Mariano test [@davidescu2021; @inganas2023; @pavlicek2015]. The Diebold-Mariano test specifically calculates the loss differential between two competing forecasts—such as a baseline autoregressive model without search data and the regularized model utilizing Google Trends—to establish whether the difference in accuracy is statistically significant or merely due to sampling uncertainty [@davidescu2021; @inganas2023; @pavlicek2015]. By applying this rigorous test, the methodology ensures that the superior explanatory power of the behavioral trace data is mathematically validated, confirming its reliability as a mechanism to reconstruct the discontinued 40-hour standard.
+### Feature Engineering and Synchronizaation
 
-# Data Analysis
+In longitudinal macroeconomic analysis, variables such as the Consumer Price Index (CPI) and Gross Domestic Product (GDP) are periodically rebased by national statistical agencies to reflect updated consumption patterns and base-year prices. For this study, the constant-price GDP series (anchored to 2010 prices) was selected, utilizing the comprehensive backcasted series provided by the National Bureau of Statistics (NBS) to ensure historical continuity.
 
-## Temporal Disaggregation and Frequency Alignment
+To mitigate the scaling artifacts inevitably introduced by such macroeconomic rebasing, all predictors are transformed into year-on-year (YoY) growth rates. Because percentage changes are mathematically scale-invariant, this YoY transformation structurally neutralizes the multiplicative level shifts inherent to base-year updates.
 
-Integrating high-frequency digital trace data with official labor statistics inevitably introduces a severe sampling frequency mismatch. In this study, the behavioral predictor variables (Google Trends search queries) are generated at high frequencies (hourly, daily or monthly) with the possibility for aggregation, whereas the target ground truth; the historical 40-hour unemployment rate, was published annually in earlier periods before transitioning to a quarterly release schedule. To construct a valid predictive model, these asymmetric frequencies must be mathematically aligned without destroying the underlying behavioral signal or distorting the historical baseline.
+To ensure strict temporal synchronization between the predictors and the target variable, the historical unemployment rate is similarly transformed into YoY changes. Quarter-on-quarter (QoQ) differencing was specifically rejected for this reconstruction. Because portions of the historical unemployment series contain imputed intra-year observations, QoQ transformations risk capturing and amplifying the noise of these short-term imputations rather than actual economic shifts. Conversely, YoY differencing smooths out this imputed volatility, ensuring the model learns the true, underlying structural relationships of the labor market.
 
-The nowcasting literature presents several strategies for handling mismatched data. One advanced approach involves Mixed-Data Sampling (MIDAS) regressions, which allow high-frequency search data to be plugged directly into the model as explanatory variables for a lower-frequency target variable without manipulating the raw data [@smith2016]. However, while MIDAS regressions are highly effective for short-term, real-time nowcasting, they are less optimal for this specific research objective. Because the primary goal of this study is to reconstruct a discontinued historical series using a highly constrained sample (68 quarterly observations), the modeling architecture requires a continuous, unified dependent variable across the entire temporal domain.
+Specifically, this uniform YoY transformation circumvents the trending variable problem, which introduces severe risks of spurious regression [@a2011; @hyndman2018]. Cumulative macroeconomic indicators, such as raw CPI and constant-price GDP, inherently exhibit strong, deterministic time trends. Training a predictive model on these raw, non-stationary levels forces the algorithm to learn shared temporal drift rather than true relationships, fundamentally destroying its out-of-sample reconstruction accuracy [@hyndman2018]. As established in the time series forecasting literature, applying first-order or seasonal differencing to achieve stationarity is a strict prerequisite for statistical validity [@krishnamurthy; @hyndman2018]. Therefore, the training target is specified not as a raw level, but as the stationary, year-on-year change in the unemployment rate.
 
-Consequently, rather than utilizing mixed-frequency regressions or severely time-aggregating the search data (which sacrifices valuable behavioral volatility), this analysis adopts temporal disaggregation to transform the low-frequency target variable. Temporal disaggregation techniques are essential in data-constrained contexts, allowing researchers to mathematically estimate high-frequency time series from low-frequency aggregates while strictly preserving the trend and consistency of the original annual benchmarks [@vera-jaramillo2025].
+Let $Y_{t}$ denote the quarterly national unemployment rate at time $t$. The modeling target is defined as:
 
-The literature establishes robust empirical precedents for this approach in developing labor markets:
+$$\Delta_4 Y_t = Y_t - Y_{t-4}$$
 
-The Chow-Lin Method: Adu et al. (2023) successfully resolved a similar data scarcity issue in Ghana by utilizing the Chow-Lin disaggregation method to extract continuous monthly unemployment data from annual World Bank metrics [@adu2023].. This regression-based approach ensures that the average values of the newly created high-frequency series mathematically correspond to the observed low-frequency benchmarks.
+To maintain mathematical consistency across the system, the macroeconomic and financial predictor space is synchronized to match this exact integration order:
 
-Quadratic Match Average: Tule et al. [-@tule2016] confronted the exact frequency mismatch addressed in this study—converting annual Nigerian unemployment data into a quarterly format to match quarterly component series. They achieved this by applying the Quadratic Match Average interpolating procedure, demonstrating that this technique is particularly suited for situations where relatively few data points require interpolation and the underlying source data is fairly smooth
+Real GDP Growth: Transformed into a year-on-year growth rate to strip out long-term economic drift and capture the true output gap: $$\Delta_4 \text{GDP}_t = \frac{\text{GDP}_t - \text{GDP}_{t-4}}{\text{GDP}_{t-4}}$$
 
-Following these methodological precedents, this study resolves the institutional frequency shifts by applying temporal disaggregation (specifically the Quadratic Match Average procedure) to interpolate the earlier annual unemployment records into a quarterly format [@tule2016]. This procedure neutralizes the reporting shift, yielding a continuous, unified quarterly time-series for the entire 2004–2020 period.
+Monetary and Interest Rates: Financial rate metrics (e.g., Savings, Prime Lending, and Maximum Lending rates) are converted into year-on-year basis-point changes:
 
-Simultaneously, the high-frequency Google Trends keyword data are systematically extracted as time-aggregated corresponding quarterly blocks. This temporal splicing ensures that the structural integrity of the historical survey data is maintained while producing perfectly aligned, matched quarterly observations for both the target variable and the behavioral predictors. Ultimately, this mathematically synchronized dataset provides the rigorous structural foundation required for the Elastic Net and XGBoost reconstruction pipelines.
+$$\Delta_4 R_t = R_t - R_{t-4}$$
 
-## Results from  Modelling
+Consumer Price Index (CPI): To prevent temporal aggregation bias, monthly CPI levels are aggregated to quarterly mean levels first, followed by a quarter-on-quarter (QoQ) growth calculation to capture high-frequency price momentum:
 
-Using and ARIMAX-styled model (be more specific here)
+$$\text{CPI\_MoM}_t = \frac{\overline{\text{CPI}}_t - \overline{\text{CPI}}_t-1}{\overline{\text{CPI}}_{t-1}}$$
 
-notes
+### Temporal Disaggregation and Data Leakage Considerations
 
+The historical unemployment target series spanning 1999–2014 was originally compiled at an annual cadence and subsequently disaggregated into quarterly observations via mathematical interpolation. Consequently, within-year quarterly variations (e.g., $t-1$, $t-2$, $t-3$) during this period represent algorithmic artifacts rather than observed economic reality.To prevent the model from inadvertently learning and exploiting these artificial disaggregation patterns—which constitutes a severe form of data leakage—within-year autoregressive terms are strictly omitted from the predictor matrix. Autoregressive structure is restricted exclusively to cross-year historical boundaries representing true observed quarterly cycles: $Y_{t-4}$ (the 1-year lag) and $Y_{t-8}$ (the 2-year lag).
 
-RQ1: Does high-frequency digital trace data possess the predictive power required to reliably reconstruct the discontinued 40-hour unemployment series in Nigeria?
+## Modelling Framework
 
-Aim
+### The Elastic Net
 
-To evaluate the extent to which digital trace data (specifically Google Search Trends) can approximate the labor underutilization metrics established by the 13th ICLS, following Nigeria's transition to the 19th ICLS framework.
+A critical methodological choice in this dissertation is the utilization of an Elastic Net regression model rather than tree-based machine learning algorithms or deeep learning frameworks. While ensemble methods like Random Forests are highly popular for their ability to map complex, non-linear relationships, they suffer from a fundamental mathematical limitation in time series forecasting: they cannot extrapolate beyond the range of target values observed in their training data. Because Nigeria's unemployment rate experienced unprecedented, continuous historical highs (reaching 33.3% before the methodology was discontinued), a Random Forest model would fail to accurately forecast rising unemployment rates that exceed historical maximums. Similarly, a deep learning model will require more data to learn a stable pattern compared to the quarterly data available in this case. To overcome these limitations, the Elastic Net model was selected. The Elastic Net is a regularized regression method that combines the penalties of both Ridge regression and the Least Absolute Shrinkage and Selection Operator (LASSO) [@olukanmi2021]. This dual-penalty framework effectively handles the severe multicollinearity inherent in using multiple macroeconomic lags, performing continuous variable selection while shrinking less relevant coefficients to prevent overfitting. Crucially, because it retains a linear mathematical structure, the Elastic Net possesses the necessary capacity to accurately extrapolate and predict rising unemployment rates well beyond the limits of previously seen historical values.
 
-Specific Objectives:
+## Model Evaluation: Rolling Window Validation
 
-Baseline Modeling: To establish a statistical baseline by correlating historical Google search volumes for labor-related terms with Nigeria’s unemployment data recorded under the 13th ICLS (pre-2023).
+To rigorously assess the predictive accuracy of the Elastic Net model, the study employs a rolling window evaluation approach [@damuri2010]. Standard randomized cross-validation is often mathematically invalid for time series data because it assumes observations are independent and identically distributed (i.i.d.), ignoring inherent temporal dependencies and evolutionary effects over time [@bergmeir2012].
 
-Sensitivity Analysis: To determine which specific categories of search intent (e.g., job search, skill acquisition, or migration) are most sensitive to the "Old" vs. "New" definitions of employment.
+Instead, the rolling window technique (also known as a rolling forecasting origin) preserves the chronological sequence of the data [@hyndman2018]. Under this approach, the model is trained on a fixed historical window of data (baseline window of $t_0$ quarters, 40% of all data in this case to give sufficient evaluation window) and is then used to predict the immediate out-of-sample periods ( one-quarter-ahead reconstruction performance ($t_0 + 1$)) [@bergmeir2012]. The training window is then iteratively moved forward in time, and the model is re-estimated at each step [@hyndman2018; @smith2016]. This procedure meticulously simulates the real-time constraints faced by economic forecasters, ensuring that no future information is ever leaked into the training set [@hyndman2018]. By generating a sequence of sequential out-of-sample predictions, the rolling window approach provides a highly robust, unbiased evaluation of the model's true accuracy across different economic cycles.
 
-Measurement of Divergence: To quantify the "gap" or divergence between official 19th ICLS reports and the trace-data-approximated 13th ICLS metrics from 2023 to 2026.
+At each rolling origin step, an adaptive Elastic Net Regularization framework is deployed, minimizing the penalized residual sum of squares by balancing Ridge ($L_2$) and Lasso ($L_1$) penalties:
 
-Assessing Predictive Validity: To determine if trace data remains a stable predictor of the 13th ICLS "status" even when the legal classification of the individual has changed (e.g., a subsistence farmer now classified as 'employed').
+$$\min_{\beta_0, \beta} \left\{ \frac{1}{2N} \sum_{i=1}^N \left( y_i - \beta_0 - x_i^T \beta \right)^2 + \lambda \left[ \frac{1-\alpha}{2} \|\beta\|_2^2 + \alpha \|\beta\|_1 \right] \right\}$$
+
+Rather than hardcoding the mixing parameter ($\alpha$), a dual-parameter hyperparameter optimization is executed at each rolling step. An internal cross-validation loop over five folds identifies the optimal shrinkage penalty ($\lambda_{\min}$), while a simultaneous grid search across the alpha spectrum ($\alpha \in \{0.0, 0.2, 0.4, 0.6, 0.8, 1.0\}$) evaluates and selects the precise blend of feature selection (Lasso) and collinearity smoothing (Ridge) that minimizes out-of-sample reconstruction error.
+
+## Level Reconstruction Mechanics
+
+Because the Elastic Net model is trained on stationary, differenced data to preserve statistical integrity, a vital post-estimation step is required to generate the final historical level series. The model yields a predicted year-on-year change ($\Delta_4 \hat{Y}_t$). The actual reconstructed level of the National unemployment rate ($\hat{Y}_t$) is mathematically operationalized by integrating the predicted difference back onto the true historical anchor from one year prior ($Y_{t-4}$):
+
+$$\hat{Y}_t = \Delta_4 \hat{Y}_t + Y_{t-4}$$
+
+This recursive integration ensures that while the model learns from clean, trend-free innovations, the final output is delivered on the original percentage-point scale required for policy analysis and historical interpretation.
+
+## Predictor Importance from Elastic Net Coefficients
+
+To identify the structural drivers of the reconstruction, the in-sample regression coefficients were examined. In addition, feature importance was estimated using Permutation Feature Importance across twenty random shuffles ($n_{sim}=20$). Repeating the permutation procedure reduces random variation in the resulting importance estimates and improves their stability.
+
+For each predictor, its values were randomly permuted, thereby breaking its relationship with the target variable while leaving all other features unchanged. The resulting increase in Root Mean Squared Error (RMSE) was used as a measure of the predictor's contribution to model performance.
+
+# Results
+
+This chapter presents the results of the unemployment forecasting models developed using quarterly macroeconomic indicators and digital trace data for Nigeria. The analysis employed Elastic Net regression with rolling-origin cross-validation to predict unemployment rates one quarter ahead. Rolling-origin evaluation was chosen to preserve temporal ordering and avoid look-ahead bias commonly associated with conventional k-fold cross-validation in time series applications.
+
+The feature set consisted of quarterly macroeconomic indicators, including inflation (CPI), GDP, savings rates, lending rates, and autoregressive unemployment terms. Alternative model specifications, including Google Trends data and a baseline model using lag-only features, were also estimated and reported to evaluate robustness.
+
+## Descriptive Analysis
+
+The modelling dataset covered the period from January, 1999 to October, 2020, yielding 88 quarterly observations after converting the initial annual reported values into quarterly observations. The plot of the target variables are shown below;
+
+### Evolution of Unemployment under Different Definitions
+
+```{r fig-target, fig.width=9, fig.height=4.5, fig.cap="Quarterly unemployment rate under the 40-hour definition, 1999 Q1 to 2020 Q4."}
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+set.seed(123)
+
+wdir <- "./"
+
+y_df <- readRDS(file.path(wdir, "output/unified_target_variable.rds")) |>
+  as_tibble() |>
+  rename(unemployment = value)
+
+# Annotation positions (computed once so they don't drift if data updates)
+y_max <- max(y_df$unemployment, na.rm = TRUE)
+
+p_target <- ggplot(y_df, aes(x = time, y = unemployment)) +
+  # Shade the structural break period (2014 disaggregation→observed splice)
+  annotate("rect",
+           xmin = as.Date("2014-07-01"), xmax = as.Date("2014-12-31"),
+           ymin = -Inf, ymax = Inf,
+           fill = "grey90", alpha = 0.5) +
+  # Main series
+  geom_line(colour = "#1f3a5f", linewidth = 0.8) +
+  geom_point(colour = "#1f3a5f", size = 1.2, alpha = 0.6) +
+  # Splice annotation
+  annotate("text",
+           x = as.Date("2014-10-01"),
+           y = y_max * 0.95,
+           label = "Disaggregated\n-> observed splice",
+           size = 3, colour = "grey30", hjust = 0.5,
+           lineheight = 0.95) +
+  scale_x_date(
+    breaks = scales::date_breaks("3 years"),
+    labels = scales::date_format("%Y"),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_y_continuous(
+    labels = function(x) paste0(x, "%"),
+    expand = expansion(mult = c(0.02, 0.08))
+  ) +
+  labs(
+    title    = "Nigerian Unemployment Rate, 1999–2020",
+    subtitle = "Quarterly series; post-2014 values derived from additional reported data",
+    x        = NULL,
+    y        = "Unemployment Rate",
+    caption  = "Sources: National Bureau of Statistics; pre-2014 series disaggregated via Denton-Cholette."
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title        = element_text(face = "bold", size = 13, margin = margin(b = 3)),
+    plot.subtitle     = element_text(size = 10, colour = "grey35", margin = margin(b = 12)),
+    plot.caption      = element_text(size = 8, colour = "grey50", hjust = 0, margin = margin(t = 10)),
+    plot.title.position = "plot",
+    plot.caption.position = "plot",
+    panel.grid.minor  = element_blank(),
+    panel.grid.major  = element_line(colour = "grey92", linewidth = 0.3),
+    axis.title.y      = element_text(margin = margin(r = 8)),
+    axis.text         = element_text(colour = "grey25"),
+    plot.margin       = margin(15, 18, 12, 15)
+  )
+
+print(p_target)
+
+# Save as a high-resolution figure for the paper
+ggsave(file.path(wdir, "output/fig_target_series.png"), p_target,
+       width = 9, height = 4.5, dpi = 300, bg = "white")
+```
+
+Note: Pre-2014 values were temporally disaggregated from annual data using the Denton-Cholette procedure; from 2014 Q4 onward the values are computed from quarterly NLFS microdata. The shaded band marks the splice point.
+
+@fig-target shows a harmonized quarterly unemployment series for Nigeria between 1999 and 2020 constructed under a consistent less-than-40-hours-per-week definition of unemployment. To ensure comparability over time, observations collected under subsequent NBS methodologies (the 20-hour definition) were converted and temporally disaggregated to produce a unified series. The resulting estimates indicate a long-run increase in unemployment rate, with unemployment rising from below 10% in the late 1990s to over 50% by 2020. While the series exhibits periods of relative stability, particularly during the early and mid-2000s, unemployment increases substantially after 2015, reflecting the combined effects of economic slowdown, the 2016 recession, and broader structural labour market challenges. Unlike the ILO modelled unemployment series @fig-ilo-target, which remains below 6% throughout the same period, this harmonized measure captures the prevalence of insufficient labour market engagement under a substantially stricter employment threshold. The divergence between the two series illustrates how alternative definitions of employment can generate markedly different assessments of labour market conditions
+
+```{r fig-ilo-target, fig.width=9, fig.height=4.5, fig.cap="Yearly modelled unemployment rate under the ILO definition"}
+
+y_df <- read.csv(file.path(wdir, "data/ilo_unemployment.csv")) |>
+  select(time, obs_value) |>
+  arrange(time) |>
+  mutate(time = as.integer(time),
+         unemployment = as.numeric(obs_value))
+
+p_target <- y_df |>
+  ggplot(aes(x = time, y = unemployment)) +
+  geom_line(colour = "#1f3a5f", linewidth = 0.8) +
+  geom_point(colour = "#1f3a5f", size = 1.2, alpha = 0.6) +
+  scale_x_continuous(
+    breaks = seq(min(y_df$time), max(y_df$time), by = 3),
+    expand = expansion(mult = c(0.02, 0.02))
+  ) +
+  scale_y_continuous(
+    labels = function(x) paste0(x, "%"),
+    expand = expansion(mult = c(0.02, 0.08))
+  ) +
+  labs(
+    title    = paste0("Nigerian unemployment rate, ",
+                      min(y_df$time), "\u2013", max(y_df$time)),
+    subtitle = "ILO modelled estimates",
+    x        = NULL,
+    y        = "Unemployment Rate",
+    caption  = "Source: ILO database"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title            = element_text(face = "bold", size = 13, margin = margin(b = 3)),
+    plot.subtitle         = element_text(size = 10, colour = "grey35", margin = margin(b = 12)),
+    plot.caption          = element_text(size = 8, colour = "grey50", hjust = 0, margin = margin(t = 10)),
+    plot.title.position   = "plot",
+    plot.caption.position = "plot",
+    panel.grid.minor      = element_blank(),
+    panel.grid.major      = element_line(colour = "grey92", linewidth = 0.3),
+    axis.title.y          = element_text(margin = margin(r = 8)),
+    axis.text             = element_text(colour = "grey25"),
+    plot.margin           = margin(15, 18, 12, 15)
+  )
+
+print(p_target)
+
+ggsave(file.path(wdir, "output/fig_ilo_target_series.png"), p_target,
+       width = 9, height = 4.5, dpi = 300, bg = "white")
+```
+
+@fig-ilo-target presents the ILO modelled unemployment rate for Nigeria between 2000 and 2026. Unlike Nigeria's former domestic unemployment measure, these estimates are produced using the ILO's internationally harmonized labour force framework, which classifies individuals as employed if they perform at least one hour of work for pay or profit during the reference period. As a result, the series remains consistently low, ranging from approximately 3.1% to 5.7% over the period. The sharp contrast between these estimates and Nigeria's former domestic unemployment rates highlights the extent to which measured labour market conditions depend on the underlying definition of employment.
+
+### Spurious Correlation Arising From Common Temporal Trends
+
+```{r}
+#| label: fig-raw-correlation
+#| fig.cap: Raw Correlations of Features
+
+# Feature matrix from the build_quarterly_features pipeline
+x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds")) 
+
+y_df <- readRDS(file.path(wdir, "output/unified_target_variable.rds")) |>
+  as_tibble() |>
+  rename(unemployment = value)
+
+model_df <- inner_join(y_df, x_df, by = "time") |>
+  arrange(time)
+
+model_df <- model_df |>
+  mutate(
+    y_lag4  = lag(unemployment, 4),   # same quarter, 1 year ago
+    y_lag8  = lag(unemployment, 8),   # same quarter, 2 years ago
+    y_yoy   = y_lag4 - lag(unemployment, 8)  # year-on-year change at t-4
+  )
+
+# ---- Build correlation table (Clean Single Lines & Short Lags) ----
+feature_cols <- setdiff(colnames(model_df), c("time", "unemployment"))
+
+cors_df <- tibble(
+  feature = feature_cols,
+  correlation = sapply(feature_cols, function(f) {
+    cor(model_df$unemployment, model_df[[f]], use = "complete.obs")
+  })
+) |>
+  mutate(
+    abs_correlation = abs(correlation),
+    direction = ifelse(correlation > 0, "Positive", "Negative"),
+    feature_type = case_when(
+      grepl("^y_", feature) ~ "Lags",  # FIX: Changed to just "Lags"
+      feature %in% c("CPI_Level", "GDP_constant_2010") ~ "Macroeconomic",
+      grepl("Lending|TD_|Savings|Rate", feature) ~ "Financial",
+      TRUE ~ "Other"
+    ),
+    feature_label = recode(feature,
+      "CPI_Level"               = "Consumer Price Index (CPI)",
+      "GDP_constant_2010" = "Real GDP (2010 Prices)",
+      "Savings_Rate"      = "Savings Rate",
+      "Prime_Lending"     = "Prime Lending Rate",
+      "Max_Lending"       = "Maximum Lending Rate",
+      "TD_3m"             = "3-Month Term Deposit",
+      "TD_12m"            = "12-Month Term Deposit",
+      "y_lag4"            = "Unemployment (1-Year Lag)",
+      "y_lag8"            = "Unemployment (2-Year Lag)",
+      "y_yoy"             = "Unemployment (YoY Change)"
+    )
+  )|>
+  arrange(desc(abs_correlation))
+
+# ---- Plot 1: Cleaned & Focused Correlation Bars ----
+p_cor <- ggplot(cors_df,
+                aes(x = reorder(feature_label, abs_correlation),
+                    y = correlation,
+                    fill = feature_type)) +
+  geom_col(width = 0.6, alpha = 0.95) + 
+  
+  # Clean zero baseline
+  geom_hline(yintercept = 0, colour = "#4a4a4a", linewidth = 0.4) +
+  
+  # Smart text placement based on direction
+  geom_text(aes(label = sprintf("%.2f", correlation),
+                hjust = ifelse(correlation > 0, -0.2, 1.2)),
+            size = 3.3, 
+            fontface = "bold",
+            colour = "#2c3e50") +
+  
+  # Sophisticated, high-contrast color palette
+  scale_fill_manual(values = c(
+    "Lags"          = "#1d3557",  # Deep navy
+    "Macroeconomic" = "#c9ada7",  # Slate
+    "Financial"     = "#9a8c98"  # Muted taupe
+  )) +
+  
+  # Give labels breathing room on the edges
+  scale_y_continuous(limits = c(-1.15, 1.15),
+                     breaks = seq(-1, 1, 0.5),
+                     expand = expansion(mult = c(0.05, 0.05))) +
+  
+  coord_flip(clip = "off") +
+  
+  # Clear, editorial typography
+  labs(
+    title    = "Common Trends Inflate Apparent Relationships",
+    subtitle = "Pearson correlation coefficients (r) vs. current unemployment rate",
+    x        = NULL,
+    y        = "Correlation Coefficient",
+    fill     = NULL,
+    caption  = "Note: Strong upward trends in CPI and GDP create an illusion of near-perfect correlation."
+  ) +
+  
+  # FIX: Kept on 1 row because the shortened "Lags" string makes it fit easily
+  guides(fill = guide_legend(nrow = 1)) +
+  
+  theme_minimal(base_size = 11) +
+  theme(
+    # Typography
+    plot.title         = element_text(face = "bold", size = 13.5, colour = "#111111", margin = margin(b = 4)),
+    plot.subtitle      = element_text(size = 10, colour = "#555555", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8, colour = "#888888", hjust = 0, margin = margin(t = 12)),
+    
+    axis.text.y        = element_text(size = 9.5, face = "plain", colour = "#222222"),
+    axis.text.x        = element_text(size = 9.5, colour = "#666666"),
+    axis.title.x       = element_text(size = 10, colour = "#444444", margin = margin(t = 8)),
+    
+    # Align titles perfectly to the left of the canvas
+    plot.title.position   = "plot",
+    plot.caption.position = "plot",
+    
+    # Grid cleaning
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "#eef0f2", linewidth = 0.5),
+    
+    # FIX: Legend clean and compact at the top-left
+    legend.position      = "top",
+    legend.justification = "left",
+    legend.direction     = "horizontal",
+    legend.title         = element_text(size = 9.5, face = "bold", colour = "#333333"),
+    legend.text          = element_text(size = 9.5, colour = "#444444"),
+    legend.margin        = margin(t = 4, b = 10, l = 0, r = 0), 
+    
+    # Canvas padding
+    plot.margin          = margin(20, 20, 15, 25)
+  )
+
+print(p_cor)
+
+# Export configuration
+ggsave(file.path(wdir, "output/fig_raw_bivariate_correlations_clean.png"), p_cor,
+       width = 9.0, height = 5.5, dpi = 300, bg = "white")
+```
+
+@fig-raw-correlation reports pairwise correlations between unemployment and the candidate predictor variables using the original non-stationary series. Several variables exhibit remarkably strong correlations with unemployment. For example, CPI, GDP, and autoregressive features show correlations exceeding 0.8 in absolute value.
+
+However, these relationships need to be carefully considered. Many macroeconomic variables exhibit strong time trends and persistence. When two unrelated variables trend upward over time, they may appear highly correlated even in the absence of a meaningful economic relationship. This phenomenon, commonly referred to as spurious correlation, creates temporal confounding in predictive modelling.
+
+To distinguish genuine economic relationships from common temporal trends, I transformed the variables to achieve stationarity and the correlation analysis is repeated below. Following differencing, several previously strong relationships weakened substantially, while others remained relatively robust.
+
+```{r}
+#| label: Fig-stationary-correlation
+#| fig-cap: "Stationary Correlations of Features"
+
+x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds"))
+
+model_df <- inner_join(y_df, x_df, by = "time") |>
+   mutate(
+    y_lag4 = dplyr::lag(unemployment, 4),
+    y_lag8 = dplyr::lag(unemployment, 8))|>
+  arrange(time)
+
+# Build lags and stationary features in correct dependency order
+model_df_diff <- model_df |>
+  mutate(
+    y_yoy  = y_lag4 - dplyr::lag(unemployment, 8),
+    d_unemployment  = unemployment - y_lag4,
+    # CPI growth rate from level
+    cpi_yoy = (CPI_Level - dplyr::lag(CPI_Level, 4)) / dplyr::lag(CPI_Level, 4),
+    gdp_growth_yoy  = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
+    d_prime_lending = Prime_Lending - dplyr::lag(Prime_Lending, 4),
+    d_max_lending   = Max_Lending - dplyr::lag(Max_Lending, 4),
+    d_savings_rate  = Savings_Rate - dplyr::lag(Savings_Rate, 4),
+    
+  ) |>
+  select(-GDP_constant_2010, -Prime_Lending, -Max_Lending, -Savings_Rate, -unemployment, -CPI_Level) |>
+  filter(if_all(everything(), ~ !is.na(.)))
+
+
+# Correlation table
+feature_cols <- setdiff(colnames(model_df_diff), c("time", "d_unemployment"))
+
+cors_df <- tibble(
+  feature = feature_cols,
+  correlation = sapply(feature_cols, function(f) {
+    cor(model_df_diff$d_unemployment, model_df_diff[[f]], use = "complete.obs")
+  })
+) |>
+  mutate(
+    abs_correlation = abs(correlation),
+    direction = ifelse(correlation > 0, "Positive", "Negative"),
+    feature_type = case_when(
+      grepl("^y_", feature) ~ "Lags",
+      grepl("^gdp_|^cpi_|CPI", feature, ignore.case = TRUE) ~ "Macroeconomic",
+      grepl("lending|deposit|savings|TD_", feature, ignore.case = TRUE) ~ "Financial",
+      TRUE ~ "Other"
+    ),
+    feature_label = recode(feature,
+      "cpi_yoy"         = "CPI Growth (YoY)",
+      "gdp_growth_yoy"  = "GDP Growth (YoY)",
+      "d_prime_lending" = "Δ Prime Lending Rate",
+      "d_max_lending"   = "Δ Max Lending Rate",
+      "d_savings_rate"  = "Δ Savings Rate",
+      "TD_3m"             = "3-Month Term Deposit",
+      "TD_12m"            = "12-Month Term Deposit",
+      "y_lag4"            = "Unemployment (1-Year Lag)",
+      "y_lag8"            = "Unemployment (2-Year Lag)",
+      "y_yoy"             = "Unemployment (YoY Change)"
+    )
+  ) |>
+  arrange(desc(abs_correlation))
+
+# ---- Plot 1: Cleaned & Focused Correlation Bars ----
+p_cor <- ggplot(cors_df,
+                aes(x = reorder(feature_label, abs_correlation),
+                    y = correlation,
+                    fill = feature_type)) +
+  geom_col(width = 0.6, alpha = 0.95) + 
+  
+  # Clean zero baseline
+  geom_hline(yintercept = 0, colour = "#4a4a4a", linewidth = 0.4) +
+  
+  # Smart text placement based on direction
+  geom_text(aes(label = sprintf("%.2f", correlation),
+                hjust = ifelse(correlation > 0, -0.2, 1.2)),
+            size = 3.3, 
+            fontface = "bold",
+            colour = "#2c3e50") +
+  
+  # Sophisticated, high-contrast color palette
+  scale_fill_manual(values = c(
+    "Lags"          = "#1d3557",  # Deep navy
+    "Macroeconomic" = "#c9ada7",  # Slate
+    "Financial"     = "#9a8c98"  # Muted taupe
+  )) +
+  
+  # Give labels breathing room on the edges
+  scale_y_continuous(limits = c(-1.15, 1.15),
+                     breaks = seq(-1, 1, 0.5),
+                     expand = expansion(mult = c(0.05, 0.05))) +
+  
+  coord_flip(clip = "off") +
+  
+  # Clear, editorial typography
+  labs(
+    title    = "Bivariate correlations of stationary features",
+    subtitle = "Pearson correlation coefficients (r) vs. differenced unemployment rate",
+    x        = NULL,
+    y        = "Correlation Coefficient",
+    fill     = NULL,
+    caption  = "Note: Strong upward trends in raw CPI and GDP create an illusion of near-perfect correlation."
+  ) +
+  
+  guides(fill = guide_legend(nrow = 1)) +
+  
+  theme_minimal(base_size = 11) +
+  theme(
+    # Typography
+    plot.title         = element_text(face = "bold", size = 13.5, colour = "#111111", margin = margin(b = 4)),
+    plot.subtitle      = element_text(size = 10, colour = "#555555", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8, colour = "#888888", hjust = 0, margin = margin(t = 12)),
+    
+    axis.text.y        = element_text(size = 9.5, face = "plain", colour = "#222222"),
+    axis.text.x        = element_text(size = 9.5, colour = "#666666"),
+    axis.title.x       = element_text(size = 10, colour = "#444444", margin = margin(t = 8)),
+    
+    # Align titles perfectly to the left of the canvas
+    plot.title.position   = "plot",
+    plot.caption.position = "plot",
+    
+    # Grid cleaning
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_line(colour = "#eef0f2", linewidth = 0.5),
+    
+    # FIX: Legend clean and compact at the top-left
+    legend.position      = "top",
+    legend.justification = "left",
+    legend.direction     = "horizontal",
+    legend.title         = element_text(size = 9.5, face = "bold", colour = "#333333"),
+    legend.text          = element_text(size = 9.5, colour = "#444444"),
+    legend.margin        = margin(t = 4, b = 10, l = 0, r = 0), 
+    
+    # Canvas padding
+    plot.margin          = margin(20, 20, 15, 25)
+  )
+
+print(p_cor)
+
+# Export configuration
+ggsave(file.path(wdir, "output/fig_bivariate_correlations_clean.png"), p_cor,
+       width = 9.0, height = 5.5, dpi = 300, bg = "white")
+```
+
+The comparison shows that much of the predictive power in the raw data reflects shared temporal dynamics rather than genuine economic relationships, so reconstruction models built on raw values risk producing spurious results. Nevertheless, a subset of variables continues to exhibit meaningful associations with unemployment after stationarity adjustments, suggesting that these indicators contain information beyond simple co-trending behaviour.
+
+## Model evaluation
+
+### Elastic Net Model Performance
+
+The Elastic Net model was evaluated using rolling-origin cross-validation with an expanding training window.
+
+@tbl-model-performance presents the forecasting performance metrics.
+
+```{r}
+#| label: tbl-model-performance
+#| echo: false
+
+
+library(glmnet)
+
+# ---- Elastic Net Function with Hyperparameter Alpha Grid-Search Optimization ----
+rolling_origin_enet <- function(data, target_col, min_train = 30, nfolds_cv = 5, standardize = TRUE) {
+  n <- nrow(data)
+  results <- vector("list", n - min_train)
+  alphas <- seq(0, 1, by = 0.2) # Alpha grid search space
+
+  for (i in seq(min_train + 1, n)) {
+    train <- data[1:(i - 1), ]
+    test  <- data[i, , drop = FALSE]
+
+    x_train <- train |> select(-time, -all_of(target_col)) |> as.matrix()
+    y_train <- train[[target_col]]
+    x_test  <- test  |> select(-time, -all_of(target_col)) |> as.matrix()
+
+    best_mse <- Inf
+    best_cv_fit <- NULL
+    best_alpha <- 0.5
+
+    # Grid search across Ridge, Blends, and Lasso variations
+    for (a in alphas) {
+      cv_fit <- cv.glmnet(x = x_train, y = y_train, alpha = a, nfolds = nfolds_cv, standardize = standardize, family = "gaussian")
+      min_mse <- min(cv_fit$cvm)
+      if (min_mse < best_mse) {
+        best_mse <- min_mse
+        best_cv_fit <- cv_fit
+        best_alpha <- a
+      }
+    }
+
+    pred_point  <- predict(best_cv_fit, newx = x_test, s = "lambda.min") |> as.numeric()
+    train_preds <- predict(best_cv_fit, newx = x_train, s = "lambda.min") |> as.numeric()
+    resid_sd    <- sd(y_train - train_preds)
+
+    results[[i - min_train]] <- tibble(
+      time        = test$time,
+      actual      = test[[target_col]],
+      predicted   = pred_point,
+      pi_lower    = pred_point - 1.645 * resid_sd,
+      pi_upper    = pred_point + 1.645 * resid_sd,
+      alpha_opt   = best_alpha,
+      lambda_min  = best_cv_fit$lambda.min
+    )
+  }
+  bind_rows(results)
+}
+
+cv_diff <- rolling_origin_enet(data = model_df_diff, target_col = "d_unemployment", min_train = 36)
+
+# Reconstruct level boundaries out of difference outputs
+cv_diff_levels <- cv_diff |>
+  left_join(model_df |> select(time, y_lag4), by = "time") |>
+  rename(actual_diff = actual, pred_diff = predicted) |>
+  mutate(
+    actual_level = actual_diff + y_lag4,
+    pred_level   = pred_diff   + y_lag4
+  )
+
+# Calculate evaluation metrics for the level reconstruction
+level_metrics <- cv_diff_levels |>
+  summarise(
+    rmse  = sqrt(mean((actual_level - pred_level)^2)),
+    mae   = mean(abs(actual_level - pred_level)),
+    nrmse       = sqrt(mean((actual_level - pred_level)^2)) / mean(actual_level),
+    coverage_90 = mean(actual_level >= (pi_lower + y_lag4) & 
+                       actual_level <= (pi_upper + y_lag4))
+  )
+
+library(knitr)
+
+# Create a sample data frame
+df <- data.frame(
+  Metric = c("RMSE", "MAE", "NRMSE", "90% Prediction Interval Coverage"),
+  value  = c(level_metrics$rmse, level_metrics$mae, level_metrics$nrmse, level_metrics$coverage_90)
+)
+
+# Display a clean markdown table
+kable(df, caption = "Model Performance Summary", digits = 3)
+```
+
+The model achieved an RMSE of `r round(level_metrics$rmse, 3)` and an MAE of `r round(level_metrics$mae, 3)`, indicating that forecasts were generally close to observed unemployment rates. The normalized RMSE of `r round(level_metrics$nrmse, 3)` indicates that the forecast errors amounted to approximately `r round(level_metrics$nrmse*100,2)`% of the average unemployment rate, suggesting relatively low error relative to the scale of the series.
+
+The prediction intervals achieved a coverage rate of `r round(level_metrics$coverage_90*100, 2)`%, compared with the nominal 90% level. Although slightly below the target, this indicates that the uncertainty estimates were reasonably well calibrated.
+
+### Out-of-Sample Reconstruction Visualization
+
+@fig-reconstruction-visualization compares observed and predicted unemployment rates across the evaluation period.
+
+The forecasts closely tracked medium-term movements in unemployment, although some deviations occurred during periods of rapid change. This pattern is expected because Elastic Net regression primarily captures systematic relationships rather than unexpected shocks.
+
+```{r}
+#| label: fig-reconstruction-visualization
+#| fig-cap: "Rolling Out-of-Sample Reconstruction"
+#| fig-pos: "H"
+
+# Generate the tracking visualization
+p_cv <- ggplot(cv_diff_levels, aes(x = time)) +
+  geom_ribbon(aes(ymin = pi_lower + y_lag4, ymax = pi_upper + y_lag4),
+              fill = "#2E5C8A", alpha = 0.15) +
+  geom_line(aes(y = actual_level), colour = "#111111", linewidth = 0.7) +
+  geom_line(aes(y = pred_level),   colour = "#2E5C8A", linewidth = 0.7, linetype = "dashed") +
+  labs(
+    title    = "Rolling-Origin Reconstructed Unemployment Level Forecasts",
+    subtitle = paste0("Solid = Actual, Dashed = Reconstructed 1-Quarter-Ahead Forecast | 90% PI Band"),
+    caption  = paste0("Model Performance: NRMSE = ", round(level_metrics$nrmse, 3), 
+                      " - PI Interval Coverage = ", round(level_metrics$coverage_90, 2)),
+    x        = NULL,
+    y        = "Unemployment Rate (%)"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 12, colour = "#111111", margin = margin(b = 3)),
+    plot.subtitle      = element_text(size = 9.5, colour = "#555555", margin = margin(b = 12)),
+    plot.caption       = element_text(size = 8.5, colour = "#777777", hjust = 0, margin = margin(t = 10)),
+    panel.grid.minor   = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(colour = "#eef0f2", linewidth = 0.5),
+    plot.title.position = "plot"
+  )
+
+ggsave(file.path(wdir, "output/reconstructed_level_forecasts.png"), p_cv, width = 9, height = 4.5, dpi = 300, bg = "white")
+
+print(p_cv)
+```
+
+### Digital Trace Extension
+
+#### Effect of Including Digital Trace Features
+
+To assess whether digital trace data improved predictive performance, the model was re-estimated including Google Trends search volumes which where reduced to 2 principal components alongside the macroeconomic predictors.
+
+```{r}
+#| label: tbl-gt_Feature_Matrix
+
+library("tidyverse")
+
+GT_MIN_NONZERO <- 0.50
+INCLUDE_GT = TRUE
+GT_TOP_K <- 2
+
+y_df <- readRDS(file.path(wdir, "output/unified_target_variable.rds")) |>
+  as_tibble() |>
+  rename(unemployment = value)
+
+x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds"))
+
+model_df <- inner_join(y_df, x_df, by = "time") |>
+   mutate(
+    y_lag4 = dplyr::lag(unemployment, 4),
+    y_lag8 = dplyr::lag(unemployment, 8))|>
+  arrange(time)
+
+# Build lags and stationary features in correct dependency order
+model_df_diff <- model_df |>
+  mutate(
+    y_yoy  = y_lag4 - dplyr::lag(unemployment, 8),
+    d_unemployment  = unemployment - y_lag4,
+    # CPI growth rate from level
+    cpi_yoy = (CPI_Level - dplyr::lag(CPI_Level, 4)) / dplyr::lag(CPI_Level, 4),
+    gdp_growth_yoy  = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
+    d_prime_lending = Prime_Lending - dplyr::lag(Prime_Lending, 4),
+    d_max_lending   = Max_Lending - dplyr::lag(Max_Lending, 4),
+    d_savings_rate  = Savings_Rate - dplyr::lag(Savings_Rate, 4),
+    
+  ) |>
+  select(-GDP_constant_2010, -Prime_Lending, -Max_Lending, -Savings_Rate, -unemployment, -CPI_Level) |>
+  filter(if_all(everything(), ~ !is.na(.)))
+
+
+# ---- Supervised Google Trends PCA Pipeline ----
+if (INCLUDE_GT) {
+  gt_raw <- readRDS(file.path(wdir, "output/gt_quarterly_df.rds")) |> arrange(time)
+  gt_cols <- setdiff(names(gt_raw), "time")
+  
+  # 1. Align temporarily with the target to screen keywords cleanly
+  y_target <- y_df |> mutate(time = as.Date(time))
+  gt_screen_df <- gt_raw |> 
+    mutate(time = as.Date(time)) |> 
+    inner_join(y_target, by = "time") |>
+    mutate(
+      y_lag4 = dplyr::lag(unemployment, 4),
+      d_unemployment = unemployment - y_lag4
+    )
+  
+  # 2. Strict Prescreening: Drop columns that are mostly zero or constant
+  frac_nonzero <- sapply(gt_raw[gt_cols], function(v) mean(v > 0, na.rm = TRUE))
+  sd_values    <- sapply(gt_raw[gt_cols], function(v) sd(v, na.rm = TRUE))
+  
+  # Filter using your built-in GT_MIN_NONZERO toggle (e.g., 0.50)
+  dense_cols <- gt_cols[frac_nonzero >= GT_MIN_NONZERO & sd_values > 0]
+  
+  # 3. Compute stationary YoY differences for dense columns only
+  gt_diff_mat <- gt_raw |>
+    mutate(across(all_of(dense_cols), ~ . - dplyr::lag(., 4))) |>
+    filter(!is.na(dplyr::lag(gt_raw[[dense_cols[1]]], 4))) # drop initial NA rows
+  
+  # 4. Supervised Feature Selection (Top-K Filter by Absolute Correlation)
+  # Calculate correlation with the differenced target (d_unemployment)
+  gt_diff_screen <- gt_diff_mat |> 
+    mutate(time = as.Date(time)) |> 
+    inner_join(gt_screen_df |> select(time, d_unemployment), by = "time") |>
+    filter(!is.na(d_unemployment))
+  
+  cors <- sapply(dense_cols, function(col) {
+    cor(gt_diff_screen$d_unemployment, gt_diff_screen[[col]], use = "complete.obs")
+  })
+  
+  # Sort keywords by absolute correlation strength
+  cors_df <- tibble(feature = names(cors), r = cors, abs_r = abs(cors)) |> arrange(desc(abs_r))
+  
+  # Force a defensive Top-K limit if not specified (e.g., top 10 keywords)
+  k_limit <- if(is.na(GT_TOP_K)) 10 else GT_TOP_K
+  top_keywords <- cors_df$feature[1:min(k_limit, nrow(cors_df))]
+  
+  #cat("Targeted Screening: Kept top", length(top_keywords), "keywords closely tracking unemployment shocks.\n")
+  
+  # 5. Execute PCA on the High-Signal Matrix
+  pca_matrix <- gt_diff_mat |> select(all_of(top_keywords)) |> as.matrix()
+  pca_gt <- prcomp(pca_matrix, center = TRUE, scale. = TRUE)
+  
+  # Isolate top 2 components
+  gt_components <- as.data.frame(pca_gt$x[, 1:2])
+  colnames(gt_components) <- c("d_gt_pc1_intensity", "d_gt_pc2_sentiment")
+  
+  # Recombine with quarterly timestamps
+  gt_clean_pca <- tibble(time = as.Date(gt_diff_mat$time)) |> 
+    bind_cols(gt_components)
+  
+  # Master feature matrix merge
+  x_df <- model_df_diff |> inner_join(gt_clean_pca, by = "time")
+  
+  # Diagnostic Printout
+  var_shares <- (pca_gt$sdev^2) / sum(pca_gt$sdev^2)
+  # cat("\n--- Optimized Google Trends PCA Summary ---\n")
+  # cat("Keywords evaluated after zero-skipping:", length(dense_cols), "\n")
+  # cat("Keywords sent to PCA after targeting check:", length(top_keywords), "\n")
+  # cat("PC1 Explains:", round(var_shares[1] * 100, 1), "%\n")
+  # cat("PC2 Explains:", round(var_shares[2] * 100, 1), "%\n")
+  # cat("Combined Variance Captured by targeted components:", round(sum(var_shares[1:2]) * 100, 1), "%\n")
+  
+} else {
+  # cat("GT features OFF — macro-only model\n")
+}
+
+cv_diff <- rolling_origin_enet(data = x_df, target_col = "d_unemployment", min_train = 36)
+
+
+# Reconstruct level boundaries out of difference outputs
+cv_diff_levels <- cv_diff |>
+  left_join(model_df |> select(time, y_lag4), by = "time") |>
+  rename(actual_diff = actual, pred_diff = predicted) |>
+  mutate(
+    actual_level = actual_diff + y_lag4,
+    pred_level   = pred_diff   + y_lag4
+  )
+
+# Calculate evaluation metrics for the level reconstruction
+level_metrics_gt <- cv_diff_levels |>
+  summarise(
+    rmse  = sqrt(mean((actual_level - pred_level)^2)),
+    mae   = mean(abs(actual_level - pred_level)),
+    nrmse       = sqrt(mean((actual_level - pred_level)^2)) / mean(actual_level),
+    coverage_90 = mean(actual_level >= (pi_lower + y_lag4) & 
+                       actual_level <= (pi_upper + y_lag4))
+  )
+
+library(knitr)
+
+# # Create a sample data frame
+# df <- data.frame(
+#   Metric = c("RMSE", "MAE", "NRMSE", "90% Prediction Interval Coverage"),
+#   value  = c(level_metrics_gt$rmse, level_metrics_gt$mae, level_metrics_gt$nrmse, level_metrics_gt$coverage_90)
+# )
+
+df <- data.frame(
+  Model = c("Full Elastic Net", "Full Elastic Net + Trace"),
+  RMSE = c(level_metrics$rmse, level_metrics_gt$rmse),
+  MAE  = c(level_metrics$mae, level_metrics_gt$mae),
+  NRMSE = c(level_metrics$nrmse, level_metrics_gt$nrmse),
+  `90% Prediction Interval Coverage` = c(level_metrics$coverage_90, level_metrics_gt$coverage_90),
+  check.names = FALSE
+)
+
+# Display a clean markdown table
+kable(df, caption = "Extended Model Performance Summary", digits = 3)
+```
+
+The resulting model exhibited a modest improvement in predictive accuracy relative to the macroeconomic-only specification. However, this apparent improvement cannot be directly compared.
+
+Unlike the benchmark model, the digital trace specification could only be estimated using data from 2004 onwards because Google Trends data only became available after 2004. Consequently, the inclusion of search data substantially reduced the length of the estimation and evaluation sample, producing a considerably shorter evaluation window which is arguably easier to estimate. Forecasting performance is therefore not directly comparable across the two specifications, as prediction difficulty generally depends on the length and historical coverage of the evaluation period.
+
+The final forward projection reconstruction is based solely on the macroeconomic specification, allowing for a substantially longer estimation period while still delivering strong predictive accuracy.
+
+### Comparison with Lag-Only Model
+
+A naive forecast or reconstruction exercise will be based only on the immediate past values so that serves as a good bechmark to compare our model. 
+
+@tbl-model-comparison compares forecasting accuracy.
+
+```{r} 
+#| label: tbl-model-comparison 
+#| echo: false  
+
+# ---- Standalone Lag-Only CV Baseline (Differenced Scale) ----
+lag_only_diff_df <- model_df |>
+  mutate(d_unemployment = unemployment - y_lag4) |>
+  select(time, d_unemployment, y_lag4, y_lag8) |>
+  filter(if_all(everything(), ~ !is.na(.)))
+
+lag_only_cv <- rolling_origin_enet(
+  lag_only_diff_df,
+  target_col = "d_unemployment",
+  min_train = 30
+)
+
+lag_metrics <- lag_only_cv |>
+  summarise(
+    rmse        = sqrt(mean((actual - predicted)^2)),
+    mae         = mean(abs(actual - predicted)),
+    nrmse       = sqrt(mean((actual - predicted)^2)) / mean(actual),
+    coverage_90 = mean(actual >= pi_lower & actual <= pi_upper)
+  )
+
+# ---- Model Comparison Table ----
+library(knitr)
+
+df <- data.frame(
+  Model = c("Lag Only", "Full Elastic Net", "Full Elastic Net + Trace"),
+  RMSE = c(lag_metrics$rmse, level_metrics$rmse, level_metrics_gt$rmse),
+  MAE  = c(lag_metrics$mae, level_metrics$mae, level_metrics_gt$mae),
+  NRMSE = c(lag_metrics$nrmse, level_metrics$nrmse, level_metrics_gt$nrmse),
+  `90% Prediction Interval Coverage` = c(lag_metrics$coverage_90, level_metrics$coverage_90, level_metrics_gt$coverage_90),
+  check.names = FALSE
+)
+
+# Display a clean markdown table
+kable(df, caption = "Model Comparison Summary", digits = 3)
+
+```
+
+As expected the model using only the one year and 2 year autoregressive features performs worse than the models with additional information.
+
+
+## Feature Importance Analysis
+
+### Determinants of the Domestic Definition
+
+The coefficients of the model was used to identify the variables that contributed most to forecasting performance.
+
+@fig-ft-importance presents the relative importance of retained predictors of the domestic definition excluding the most dominant feature - GDP growth, to allow for better scaling of other features.
+
+The bars are coloured according to coefficient sign, indicating whether increases in the predictor are associated with increases (positive) or decreases (negative) in predicted unemployment.
+
+```{r}
+#| label: fig-ft-importance
+#| fig.cap: Feature Importances Using the Domestic Definition
+
+library(purrr)
+library(tidytext)
+library(ggplot2)
+library(glmnet)
+
+fit_enet_model <- function(model_df_diff, target_col = "d_unemployment",
+                            nfolds_cv = 5, standardize = TRUE,
+                            alphas = seq(0, 1, by = 0.2)) {
+  
+  x_mat <- model_df_diff |> select(-time, -all_of(target_col)) |> as.matrix()
+  y_vec <- model_df_diff[[target_col]]
+  
+  # Grid search over alpha, identical logic to rolling_origin_enet
+  best_mse    <- Inf
+  best_cv_fit <- NULL
+  best_alpha  <- NA_real_
+  
+  for (a in alphas) {
+    set.seed(42)
+    cv_fit <- cv.glmnet(x_mat, y_vec, alpha = a,
+                         nfolds = nfolds_cv, standardize = standardize,
+                         family = "gaussian")
+    min_mse <- min(cv_fit$cvm)
+    if (min_mse < best_mse) {
+      best_mse    <- min_mse
+      best_cv_fit <- cv_fit
+      best_alpha  <- a
+    }
+  }
+  
+  # Fit final glmnet at best alpha and lambda for vip
+  final_model <- glmnet(x_mat, y_vec,
+                         alpha     = best_alpha,
+                         lambda    = best_cv_fit$lambda.min,
+                         standardize = standardize)
+  
+
+  
+  list(
+    final_model = final_model,
+    cv_fit      = best_cv_fit,
+    alpha       = best_alpha,
+    lambda_min  = best_cv_fit$lambda.min,
+    cv_mse      = best_mse
+  )
+}
+
+
+run_importance_pipeline <- function(target_name, model_df_diff, final_model,
+                                    cv_fit = NULL, pred_wrapper = NULL,
+                                    nsim = 20) {
+
+  # Sanity checks
+  stopifnot(
+    "target_name must be a non-empty character string" =
+      is.character(target_name) && nchar(target_name) > 0,
+    "model_df_diff must contain a 'd_unemployment' column" =
+      "d_unemployment" %in% colnames(model_df_diff),
+    "model_df_diff must not contain the level 'unemployment' column (leakage check)" =
+      !"unemployment" %in% colnames(model_df_diff)
+  )
+
+  # Reconstruct feature matrix and target vector
+  x_mat <- model_df_diff |> select(-time, -d_unemployment) |> as.matrix()
+  y_vec <- model_df_diff$d_unemployment
+
+  is_glmnet <- inherits(final_model, "glmnet")
+
+  if (is_glmnet) {
+    # ---- Elastic net: importance = |coefficient| at chosen lambda ----
+    stopifnot(
+      "cv_fit must be supplied (cv.glmnet) for a glmnet model" =
+        inherits(cv_fit, "cv.glmnet")
+    )
+
+    coefs <- coef(cv_fit, s = "lambda.min")
+    coef_df <- tibble(
+      feature = rownames(coefs)[-1],
+      coef    = as.numeric(coefs)[-1]
+    ) |>
+      mutate(
+        direction  = case_when(
+          coef > 0 ~ "Positive",
+          coef < 0 ~ "Negative",
+          TRUE     ~ "Dropped"
+        ),
+        importance = abs(coef)
+      )
+
+    # glmnet standardizes internally, so coefficients on a standardized scale
+    # are comparable across features. Drop the shrunk-to-zero terms.
+    imp <- coef_df |>
+      filter(coef != 0) |>
+      select(feature, importance, coef, direction)
+
+    sign_df <- coef_df |> select(feature, coef, direction)
+
+  } else {
+    # ---- Random forest / other: permutation importance via vip ----
+    if (is.null(pred_wrapper)) {
+      # Sensible default for models with a standard predict() returning a vector
+      pred_wrapper <- function(object, newdata) {
+        as.numeric(predict(object, newdata = as.data.frame(newdata)))
+      }
+    }
+
+    set.seed(42)
+    imp <- vip::vi(
+      object       = final_model,
+      method       = "permute",
+      train        = as.data.frame(x_mat),
+      target       = y_vec,
+      metric       = "rmse",
+      pred_wrapper = pred_wrapper,
+      nsim         = nsim
+    ) |>
+      rename(feature = Variable, importance = Importance)
+
+    # Permutation importance is signless; recover direction from a cheap
+    # linear fit of target on each feature (or leave as "Unknown" if you
+    # prefer not to impute sign for a nonlinear model).
+    sign_df <- tibble(
+      feature = colnames(x_mat),
+      coef    = sapply(colnames(x_mat), function(f) {
+        v <- x_mat[, f]
+        if (sd(v) == 0) return(0)
+        cor(y_vec, v)
+      })
+    ) |>
+      mutate(direction = case_when(
+        coef > 0 ~ "Positive",
+        coef < 0 ~ "Negative",
+        TRUE     ~ "Dropped"
+      ))
+
+    imp <- imp |> left_join(sign_df, by = "feature")
+  }
+
+  imp |>
+    mutate(
+      target_definition = target_name,
+      rel_importance    = (importance / max(importance, na.rm = TRUE)) * 100
+    )
+}
+
+build_model_df_diff <- function(y_df, features) {
+  # y_df has columns: time, value (or whatever it's called — rename to unemployment)
+  y_df <- y_df |> as_tibble() |> rename(unemployment = value)
+  
+  if (inherits(features, "xts")) {
+    x_df <- features |> zoo::fortify.zoo() |> as_tibble() |>
+      rename(time = Index) |> mutate(time = as.Date(time))
+  } else {
+    x_df <- features |> as_tibble() |> mutate(time = as.Date(time))
+  }
+  
+  model_df <- inner_join(y_df, x_df, by = "time") |> arrange(time)
+  
+  model_df |>
+    mutate(
+      y_lag4          = dplyr::lag(unemployment, 4),
+      y_lag8          = dplyr::lag(unemployment, 8),
+      d_unemployment  = unemployment - y_lag4,
+      cpi_yoy = (CPI_Level - dplyr::lag(CPI_Level, 4)) / dplyr::lag(CPI_Level, 4),
+      gdp_growth_yoy  = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
+      d_prime_lending = Prime_Lending - dplyr::lag(Prime_Lending, 4),
+      d_max_lending   = Max_Lending - dplyr::lag(Max_Lending, 4),
+      d_savings_rate  = Savings_Rate - dplyr::lag(Savings_Rate, 4)
+    ) |>
+    select(-GDP_constant_2010, -Prime_Lending, -Max_Lending, -Savings_Rate, -unemployment, -CPI_Level) |>
+    filter(if_all(everything(), ~ !is.na(.)))
+}
+
+
+features <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds"))
+
+# National
+y_national      <- readRDS(file.path(wdir, "output/unified_target_variable.rds"))
+model_df_diff_national <- build_model_df_diff(y_national, features)
+fit_national    <- fit_enet_model(model_df_diff_national)
+imp_national    <- run_importance_pipeline("National (40-Hour)", model_df_diff_national, fit_national$final_model, fit_national$cv_fit)
+
+# ILO
+y_ilo           <- readRDS(file.path(wdir, "output/ilo_unemployment_quarterly.rds"))
+model_df_diff_ilo <- build_model_df_diff(y_ilo, features)
+fit_ilo         <- fit_enet_model(model_df_diff_ilo)
+imp_ilo         <- run_importance_pipeline("ILO Definition", model_df_diff_ilo, fit_ilo$final_model, fit_ilo$cv_fit)
+
+
+comparison_df   <- bind_rows(imp_national)
+
+
+# ==============================================================================
+# 9. Clear Comparative Importance Visualization
+# ==============================================================================
+plot_importance_comparison <- function(comparison_df,
+                                        title    = "Macroeconomic drivers",
+                                        subtitle = "Importance from Elastic Net on year-on-year transformed features",
+                                        caption  = "Note: GDP Growth (YoY) omitted from visualization to allow clear scaling of \nsecondary policy transmission channels.",
+                                        output_path = NULL,
+                                        ncol     = 2,
+                                        width    = 12,
+                                        height   = 5.5,
+                                        dpi      = 300) {
+  
+  # Guard against empty input
+  if (is.null(comparison_df) || nrow(comparison_df) == 0) {
+    message("comparison_df is empty — nothing to plot.")
+    return(invisible(NULL))
+  }
+  
+  # Feature label dictionary — single source of truth, no duplicates
+  feature_labels <- c(
+    "cpi_yoy"         = "CPI Growth (YoY)",
+    "gdp_growth_yoy"  = "GDP Growth (YoY)",
+    "d_prime_lending" = "Δ Prime Lending Rate",
+    "d_max_lending"   = "Δ Max Lending Rate",
+    "d_savings_rate"  = "Δ Savings Rate",
+    "TD_3m"           = "3-Month Term Deposit",
+    "TD_12m"          = "12-Month Term Deposit",
+    "y_lag4"          = "Unemployment, lag 1y",
+    "y_lag8"          = "Unemployment, lag 2y",
+    "y_yoy"           = "Unemployment, YoY change"
+  )
+  
+  plot_df <- comparison_df |>
+    filter(direction != "Dropped",
+    !feature %in% c("gdp_growth_yoy", "GDP Growth Rate (YoY)")) |>
+    mutate(
+      feature = ifelse(feature %in% names(feature_labels),
+                       feature_labels[feature],
+                       feature)
+    )
+  
+  p <- ggplot(plot_df,
+              aes(x = tidytext::reorder_within(feature, rel_importance, target_definition),
+                  y = rel_importance, fill = direction)) +
+    geom_col(width = 0.7, alpha = 0.95) +
+    facet_wrap(~ target_definition, scales = "free_y", ncol = ncol) +
+    tidytext::scale_x_reordered() +
+    scale_fill_manual(values = c("Positive" = "#B23A48", "Negative" = "#2E5C8A")) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.08))) +
+    coord_flip() +
+    labs(
+      title    = title,
+      subtitle = subtitle,
+      caption  = caption,
+      x        = NULL,
+      y        = "Relative importance",
+      fill     = "Coefficient sign"
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      plot.title          = element_text(face = "bold", size = 13.5, colour = "#111111", margin = margin(b = 4)),
+      plot.subtitle       = element_text(size = 9.5, colour = "#555555", margin = margin(b = 14)),
+      plot.caption        = element_text(size = 8.5, colour = "#777777", hjust = 0, margin = margin(t = 12)),
+      strip.text          = element_text(face = "bold", size = 11.5, margin = margin(t = 6, b = 6)),
+      strip.background    = element_rect(fill = "#f7f7f7", colour = NA),
+      panel.spacing.x     = unit(2, "lines"),
+      panel.grid.major.y  = element_blank(),
+      panel.grid.minor    = element_blank(),
+      axis.text.y         = element_text(size = 9.5, colour = "#222222"),
+      legend.position     = "bottom",
+      plot.title.position = "plot",
+      plot.margin         = margin(20, 25, 15, 20)
+    )
+  
+  if (!is.null(output_path)) {
+    ggsave(output_path, p, width = width, height = height, dpi = dpi, bg = "white")
+  }
+  
+  p   # return the plot object so the caller can print/modify
+}
+
+p <- plot_importance_comparison(comparison_df)
+print(p)
+```
+
+@fig-ft-importance presents the relative importance of the retained predictors for the domestic unemployment definition.
+
+The domestic model suggests that, after GDP growth, inflation and savings behaviour are the most important macroeconomic predictors of unemployment. The domestic model places considerable importance on inflation alongside savings rates and lending conditions, suggesting that the historical unemployment definition was closely associated with broader macroeconomic conditions beyond changes in output alone. This is consistent with the conceptual basis of the 40-hour definition, which classified individuals working fewer than 40 hours per week as unemployed. Because this measure was intended to capture inadequate labour utilisation rather than complete exclusion from work, it is plausible that it responded more strongly to macroeconomic conditions that affect the availability and intensity of work. Financial variables, including savings and lending rates, therefore provide additional predictive information beyond GDP growth. In contrast, the relatively low importance of the autoregressive terms indicates that, once these macroeconomic conditions are accounted for, historical unemployment contributes comparatively little additional information to forecasting performance.
+
+### Determinants of the ILO Definition
+
+```{r}
+#| label: fig-ft_importance-ilo
+#| fig.cap: Feature Importance Using ILO Definition
+
+
+comparison_df   <- bind_rows(imp_ilo)
+
+p <- plot_importance_comparison(comparison_df)
+print(p)
+```
+
+@fig-ft_importance-ilo presents the relative importance of the retained predictors for the ILO unemployment definition. As with the domestic model, GDP growth is omitted from the visualization because it dominated the importance rankings, allowing clearer comparison of the remaining predictors.
+
+Unlike the domestic definition, the ILO model is overwhelmingly dominated by inflation, with the remaining variables contributing substantially less predictive information. Among the retained predictors, the two-year unemployment lag is the second most important variable, indicating greater persistence in the ILO unemployment series. Monetary variables, including lending rates and savings rates, remain informative but play a comparatively smaller role. This pattern is consistent with the conceptual basis of the ILO framework, which defines employment using a one-hour threshold and therefore primarily captures transitions into and out of employment rather than changes in work intensity. Consequently, the ILO measure appears to evolve more gradually over time and is less sensitive to broader macroeconomic fluctuations than the historical domestic definition.
+
+### Comparative Feature Importance
+
+@tbl-ft_importance-comp compares the macroeconomic predictors retained by the Elastic Net models under the historical Nigerian and ILO unemployment definitions. Because Elastic Net performs variable selection through coefficient shrinkage, only variables with non-zero coefficients at the optimal penalty parameter are retained. Variables whose coefficients were shrunk to zero were excluded, indicating that they provided little additional predictive information after accounting for the remaining predictors.
+
+```{r}
+#| label: tbl-ft_importance-comp
+library(dplyr)
+library(tidyr)
+library(knitr)
+
+# 1. Combine the datasets and auto-detect whatever the feature column is named
+comparison_df <- bind_rows(
+  "National" = imp_national,
+  "ILO"      = imp_ilo,
+  .id = "target_definition"
+)
+
+# Find the name of the column holding the variables (handles 'feature' or 'Variable')
+col_names <- colnames(comparison_df)
+target_col <- col_names[col_names %in% c("feature", "Variable", "variable", "Feature")][1]
+
+comparative_table <- comparison_df %>%
+  # FIX: Force to character and strip any invisible trailing/leading spaces immediately
+  mutate(raw_feature_string = trimws(as.character(!!sym(target_col)))) %>%
+  
+  # Clean out the features immediately before doing any math or pivoting
+  mutate(
+    Clean_Variable_Name = case_when(
+      raw_feature_string == "gdp_growth_yoy"  ~ "GDP Growth Rate (YoY)",
+      raw_feature_string == "cpi_yoy"         ~ "Inflation Rate (CPI YoY)",
+      raw_feature_string == "d_prime_lending" ~ "Δ Prime Lending Rate",
+      raw_feature_string == "d_max_lending"   ~ "Δ Maximum Lending Rate",
+      raw_feature_string == "d_savings_rate"  ~ "Δ Savings Rate",
+      raw_feature_string == "TD_3m"           ~ "3-Month Term Deposit Rate (Level)",
+      raw_feature_string == "TD_12m"          ~ "12-Month Term Deposit Rate (Level)",
+      raw_feature_string == "y_lag4"          ~ "Autoregressive Lag (t-4, 1-Year)",
+      raw_feature_string == "y_lag8"          ~ "Autoregressive Lag (t-8, 2-Year)",
+      raw_feature_string == "y_yoy"           ~ "Historical Unemployment Momentum",
+      TRUE                                    ~ raw_feature_string # Fallback safety
+    )
+  ) %>%
+  
+  # 2. Compute the ranks within each model split
+  group_by(target_definition) %>%
+  mutate(
+    Rank = if_else(
+      direction == "Dropped", 
+      NA_integer_, 
+      min_rank(desc(if_else(direction == "Dropped", -Inf, rel_importance)))
+    ),
+    Rank_Sign = if_else(direction == "Dropped" | is.na(Rank), "Dropped", paste0(Rank, " (", direction, ")"))
+  ) %>%
+  ungroup() %>%
+  
+  # Keep only our newly cleaned variable column and structural data
+  select(Clean_Variable_Name, target_definition, Rank_Sign) %>%
+  
+  # 3. Pivot into side-by-side format
+  pivot_wider(
+    names_from = target_definition,
+    values_from = Rank_Sign
+  ) %>%
+  
+  # Sort cleanly by Domestic Rank sequence, pushing 'Dropped' variables to the bottom
+  arrange(coalesce(as.numeric(gsub(" .*", "", National)), 9999)) %>%
+  
+  # Final cosmetic renaming for your dissertation chapter
+  rename(
+    Variable        = Clean_Variable_Name,
+    `Domestic Rank` = National,
+    `ILO Rank`      = ILO
+  )
+
+# Render clean markdown table for your RMarkdown preview
+kable(comparative_table, caption="Comparative Feature Importance of Definitions")
+
+# Export tidy CSV file ready for Word/LaTeX link
+# dir.create("output", showWarnings = FALSE)
+# write.csv(comparative_table, "output/comparative_feature_importance_table.csv", row.names = FALSE)
+```
+
+GDP growth is the dominant predictor under both unemployment definitions, but the remaining feature rankings show clear structural differences. Under the domestic definition, inflation and monetary variables—including savings and lending rates—play a stronger predictive role. The ILO model relies more heavily on lagged unemployment, especially the two‑year term, indicating greater persistence.
+
+These contrasts reflect the definitions themselves. Nigeria’s historical measure classifies individuals working fewer than 40 hours per week as unemployed, making it sensitive to reductions in work intensity. The ILO standard counts anyone performing at least one hour of economic activity as employed, so declines in hours or earnings that do not eliminate work entirely affect the domestic measure more strongly. In Nigeria’s informal labour market, where workers rarely exit economic activity, adverse conditions typically push individuals into lower‑quality or lower‑hour jobs rather than full unemployment. The stronger role of inflation and financial variables under the domestic definition therefore aligns with a measure designed to capture inadequate labour utilisation rather than outright joblessness.
+
+Coefficient signs reinforce these differences. Inflation increases unemployment under the ILO definition but reduces it under the domestic measure. In Nigeria, inflation—often driven by supply‑side pressures—tends to push households into informal or survival‑oriented work, raising the likelihood of meeting the ILO’s one‑hour threshold while still falling short of adequate employment. Lending rates show a similar reversal: tighter credit raises unemployment under the domestic definition but reduces it under the ILO measure, likely reflecting movement into informal self‑employment when formal credit access deteriorates. These sign differences demonstrate that statistical definitions shape observed macroeconomic relationships.
+
+These findings should be interpreted as predictive rather than causal. Feature importance reflects variables that improve out‑of‑sample forecasting, and coefficient signs indicate fitted relationships. Overall, the Domestic (40‑hour) and ILO (1‑hour) series respond differently to identical macroeconomic conditions and cannot be treated as interchangeable indicators of labour market distress.
+
+### Feature Importance in a developed economy
+
+To further explore whether the macroeconomic determinants of the ILO unemployment definition differ between developed and developing economies, the a similar set of macroeconomic predictors was used to model the United Kingdom's harmonised unemployment series. The United Kingdom was selected as a developed-economy benchmark to provide a direct comparison with the Nigerian ILO model.
+
+```{r}
+#| label: tbl-Comparison_wt_Developed_Economy
+
+build_uk_model_df_diff <- function(uk_panel_path) {
+  
+  uk_panel <- readRDS(uk_panel_path)
+  
+  # Normalise date column to 'time'
+  date_col <- intersect(c("time", "date"), colnames(uk_panel))
+  if (length(date_col) == 0) {
+    stop("No 'time' or 'date' column in UK panel. Columns: ",
+         paste(colnames(uk_panel), collapse = ", "))
+  }
+  if (date_col[1] == "date") uk_panel <- uk_panel |> rename(time = date)
+  
+  uk_panel |>
+    as_tibble() |>
+    arrange(time) |>
+    rename(unemployment = Unemployment) |>
+    mutate(
+      time = as.Date(time),
+      
+      # Cross-year autoregressive lags
+      y_lag4 = dplyr::lag(unemployment, 4),
+      y_lag8 = dplyr::lag(unemployment, 8),
+      y_yoy  = y_lag4 - dplyr::lag(unemployment, 8),
+      
+      # Differenced target
+      d_unemployment = unemployment - y_lag4,
+      
+      # Stationary macro transformations — parallel to Nigeria
+      cpi_yoy        = (CPI - dplyr::lag(CPI, 4)) / dplyr::lag(CPI, 4),
+      gdp_growth_yoy = (GDP - dplyr::lag(GDP, 4)) / dplyr::lag(GDP, 4),
+      d_policy_rate  = Policy_Rate - dplyr::lag(Policy_Rate, 4),
+      d_long_rate    = Long_Rate   - dplyr::lag(Long_Rate, 4),
+      d_short_rate   = Short_Rate  - dplyr::lag(Short_Rate, 4)
+    ) |>
+    select(-unemployment,
+           -any_of("Claimant_Count"),
+           -CPI, -GDP, -Policy_Rate, -Long_Rate, -Short_Rate) |>
+    filter(if_all(everything(), ~ !is.na(.)))
+}
+
+# ---- UK pipeline using the same fit + importance functions as Nigeria ----
+model_df_diff_uk <- build_uk_model_df_diff(file.path(wdir, "output/uk/uk_panel.rds"))
+
+# cat("UK modelling sample: ", nrow(model_df_diff_uk), " quarters, ",
+#     format(min(model_df_diff_uk$time)), " to ", format(max(model_df_diff_uk$time)), "\n", sep = "")
+# cat("Features: ", paste(setdiff(colnames(model_df_diff_uk),
+#                                  c("time", "d_unemployment")), collapse = ", "), "\n\n")
+
+fit_uk        <- fit_enet_model(model_df_diff_uk)
+imp_uk        <- run_importance_pipeline(
+  target_name   = "UK Harmonised",
+  model_df_diff = model_df_diff_uk,
+  final_model   = fit_uk$final_model,
+  cv_fit        = fit_uk$cv_fit
+)
+
+
+uk_table <- imp_uk %>%
+  mutate(raw_feature = trimws(as.character(feature))) %>%
+  mutate(
+    Variable = case_when(
+      raw_feature == "gdp_growth_yoy" ~ "GDP Growth (YoY)",
+      raw_feature == "cpi_yoy"        ~ "Inflation (CPI YoY)",
+      raw_feature == "d_policy_rate"  ~ "Δ Policy Rate",
+      raw_feature == "d_long_rate"    ~ "Δ Long Rate",
+      raw_feature == "d_short_rate"   ~ "Δ Short Rate",
+      raw_feature == "y_lag4"         ~ "AR Lag (1-year)",
+      raw_feature == "y_lag8"         ~ "AR Lag (2-year)",
+      raw_feature == "y_yoy"          ~ "Unemployment Momentum (YoY)",
+      TRUE                             ~ raw_feature
+    )
+  ) %>%
+  mutate(
+    Rank = if_else(direction == "Dropped",
+                   NA_integer_,
+                   min_rank(desc(if_else(direction == "Dropped", -Inf, rel_importance))))
+  ) %>%
+  arrange(coalesce(Rank, 9999L)) %>%
+  transmute(
+    Rank,
+    Variable,
+    Coefficient       = round(coef, 4),
+    `Rel. Importance` = round(rel_importance, 1),
+    Sign              = direction
+  )
+
+kable(uk_table,
+      caption = "UK Harmonised Unemployment: Elastic Net feature importance and coefficient direction.",
+      align   = c("c", "l", "r", "r", "c"))
+```
+
+@tbl-Comparison_wt_Developed_Economy presents the variables retained by the Elastic Net model for the United Kingdom's harmonised unemployment series. Inflation (CPI year-on-year growth) emerged as the dominant predictor, contributing substantially more to forecasting performance than any other variable. GDP growth ranked second with a negative coefficient, consistent with the expectation that stronger economic growth is associated with lower unemployment. The remaining predictors, including unemployment momentum, interest rate changes, and autoregressive lags, contributed relatively little additional predictive information after accounting for inflation and output growth. The predominance of inflation is consistent with labour markets in advanced economies, where price pressures are more closely linked to labour market tightness and aggregate demand. Unlike the Nigerian models, persistence plays a comparatively minor role, suggesting that current macroeconomic conditions explain a larger share of short-term movements in the UK's harmonised unemployment rate.
+
+## Reconstruction of the Discontinued Series
+
+The fitted model is now used to project forward the discontinued series;
+
+```{r}
+#| label: Fig-reconstruction
+#| fig.cap: Forward Projection of Discontinued Series
+#| echo: false
+library(dplyr)
+library(tidyr)
+library(glmnet)
+library(ggplot2)
+
+x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds"))
+
+model_df <- inner_join(y_df, x_df, by = "time")
+
+# 1. Prep Training Data & Find Best Model
+historical_train <- model_df |>
+  mutate(
+    y_lag4 = dplyr::lag(unemployment, 4), y_lag8 = dplyr::lag(unemployment, 8),
+    y_yoy = y_lag4 - y_lag8, d_unemployment = unemployment - y_lag4,
+    cpi_yoy = (CPI_Level - dplyr::lag(CPI_Level, 4)) / dplyr::lag(CPI_Level, 4),
+    gdp_growth_yoy = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
+    across(c(Prime_Lending, Max_Lending, Savings_Rate), ~ . - dplyr::lag(., 4), .names = "d_{.col}")
+  ) |> filter(!is.na(d_unemployment), !is.na(y_lag8))
+
+feature_cols <- c("y_lag4", "y_lag8", "y_yoy", "cpi_yoy", "gdp_growth_yoy", 
+                  "d_Prime_Lending", "d_Max_Lending", "d_Savings_Rate", "TD_12m", "TD_3m")
+
+x_hist <- as.matrix(historical_train[, feature_cols])
+y_hist <- historical_train$d_unemployment
+
+# Tighter grid search loop
+cv_results <- lapply(seq(0, 1, by = 0.2), function(a) {
+  fit <- cv.glmnet(x = x_hist, y = y_hist, alpha = a, nfolds = 5, standardize = TRUE)
+  list(alpha = a, mse = min(fit$cvm), fit = fit)
+})
+best <- cv_results[[which.min(sapply(cv_results, `[[`, "mse"))]]
+
+reconstruction_model_final <- glmnet(x = x_hist, y = y_hist, alpha = best$alpha, lambda = best$fit$lambda.min, standardize = TRUE)
+resid_sd <- sd(y_hist - as.numeric(predict(reconstruction_model_final, newx = x_hist)))
+
+# 2. Recursive Out-of-Sample Trace Simulation
+trace_panel <- x_df |> left_join(y_df, by = "time") |> arrange(time) |>
+  mutate(
+    cpi_yoy = (CPI_Level - dplyr::lag(CPI_Level, 4)) / dplyr::lag(CPI_Level, 4),
+    gdp_growth_yoy = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
+    across(c(Prime_Lending, Max_Lending, Savings_Rate), ~ . - dplyr::lag(., 4), .names = "d_{.col}"),
+    reconstructed_level = unemployment,
+    series_status = if_else(!is.na(unemployment), "Observed Historical", "Digital Trace Extension")
+  )
+
+for (i in seq(which(is.na(trace_panel$reconstructed_level))[1], nrow(trace_panel))) {
+  l4 <- trace_panel$reconstructed_level[i - 4]
+  l8 <- trace_panel$reconstructed_level[i - 8]
+  
+  sim_row <- tibble(
+    y_lag4 = l4, y_lag8 = l8, y_yoy = l4 - l8, cpi_yoy = trace_panel$cpi_yoy[i],
+    gdp_growth_yoy = trace_panel$gdp_growth_yoy[i], d_Prime_Lending = trace_panel$d_Prime_Lending[i],
+    d_Max_Lending = trace_panel$d_Max_Lending[i], d_Savings_Rate = trace_panel$d_Savings_Rate[i],
+    TD_12m = trace_panel$TD_12m[i], TD_3m = trace_panel$TD_3m[i]
+  ) |> select(all_of(feature_cols)) |> as.matrix()
+  
+  trace_panel$reconstructed_level[i] <- as.numeric(predict(reconstruction_model_final, newx = sim_row)) + l4
+}
+
+# 3. Quick Plot with Text Wrap
+trace_panel <- trace_panel |> mutate(
+  pi_lower = if_else(series_status == "Digital Trace Extension", reconstructed_level - 1.645 * resid_sd, NA_real_),
+  pi_upper = if_else(series_status == "Digital Trace Extension", reconstructed_level + 1.645 * resid_sd, NA_real_)
+)
+
+ggplot(trace_panel |> filter(!is.na(reconstructed_level)), aes(x = time)) +
+  geom_ribbon(aes(ymin = pi_lower, ymax = pi_upper), fill = "#1b9e77", alpha = 0.12) +
+  geom_line(aes(y = reconstructed_level, color = series_status, linetype = series_status), linewidth = 0.8) +
+  geom_vline(xintercept = as.Date("2020-12-01"), color = "grey60", linetype = "dotted") +
+  scale_color_manual(values = c("Observed Historical" = "#111111", "Digital Trace Extension" = "#1b9e77")) +
+  labs(
+    title = stringr::str_wrap("Digital Trace Extension of Discontinued Unemployment Series", width = 50),
+    caption = 'Prediction intervals are based on in-sample residual dispersion and should be \ninterpreted as approximate rather than formal recursive forecast intervals.',
+    subtitle = stringr::str_wrap(paste0("Optimized Elastic Net tracking (Alpha = ", best$alpha, ")"), width = 60),
+    x = NULL, y = "Unemployment Rate (%)", color = NULL, linetype = NULL
+  ) +
+  theme_minimal() + 
+  theme(legend.position = "bottom", plot.margin = margin(20, 25, 20, 20),
+        plot.title = element_text(face = "bold", lineheight = 1.2), plot.subtitle = element_text(lineheight = 1.2))
+
+```
+
+The reconstructed series can be interpreted as a counterfactual continuation of Nigeria's historical unemployment framework. Rather than estimating a hypothetical labour market outcome, the reconstruction seeks to answer a specific measurement question: what would reported unemployment have looked like had the historical 40-hour definition remained in use after 2020?
+
+The reconstructed series suggests that considerably higher levels of labour market distress would have been recorded under the previous framework, as expected. Due to limitations in the reconstruction—specifically the use of the initial 40‑hour definition rather than the more current 20‑hour one—the series is projected to rise as high as 77% when forward‑projected, which may appear out of place initially. However, considering that the Nigerian Bureau of Statistics reported informal employment among Nigerians at 92.6% in the first quarter of 2023, and that this rate has consistently remained significantly high, the projection becomes plausible.
+
+Importantly, this does not imply that either measure is inherently incorrect. Rather, each measure reflects a different conceptualization of meaningful economic participation. The historical Nigerian framework emphasized adequate labour engagement through a higher work-hour threshold, whereas the ILO framework prioritizes international comparability through a broader definition of employment. The reconstruction therefore illustrates the practical consequences of adopting one measurement philosophy over another.
+
+# Discussion
+
+## Can the Discontinued Series Be Reliably Reconstructed?
+
+The results demonstrate that the discontinued unemployment series can be reconstructed with a reasonable degree of accuracy using macroeconomic indicators and autoregressive dynamics. Across the evaluation period, the Elastic Net model consistently outperformed the lag-only benchmark, indicating that macroeconomic conditions contain information beyond the persistence typically observed in unemployment series. This suggests that reconstruction is feasible and that discontinued official statistics need not necessarily create a permanent break in longitudinal labour market analysis.
+
+However, the findings also illustrate the limitations of historical reconstruction. The recursive forecasting procedure relies on its own previous predictions, meaning that any prediction error propagates through subsequent forecasts. Although the reconstructed trajectory remains economically plausible over the evaluation period, forecast uncertainty inevitably increases as the prediction horizon extends. In practice, this implies that reconstruction is most reliable over relatively short-to-medium horizons unless the model is periodically recalibrated using newly observed unemployment data.
+
+This limitation is particularly important in the context of the Nigerian unemployment series. Because the historical 40-hour definition has been permanently discontinued, there are no future observations against which reconstructed values can be validated. Unlike conventional forecasting problems, there is no opportunity to update the model or assess whether structural changes in the economy have altered the underlying relationship between macroeconomic variables and unemployment. Consequently, the reconstructed series should be interpreted as a statistically informed counterfactual rather than a replacement for future official statistics. Its primary value lies in preserving historical continuity and supporting longitudinal analysis, rather than providing definitive estimates of future unemployment under the discontinued definition.
+
+## What Do Digital Trace Data Contribute?
+
+The inclusion of Google Trends variables produced a modest improvement in predictive performance, suggesting that behavioural search activity contains additional information relevant to labour market conditions. This finding is broadly consistent with the digital nowcasting literature, which argues that individuals experiencing labour market distress often alter their online behaviour before these changes become visible in official statistics.
+
+However, the practical value of these gains must be interpreted in light of an important methodological trade-off. Because Google Trends data are only available from 2004 onwards, incorporating digital trace variables substantially shortened both the estimation period and the out-of-sample evaluation window. As a result, the predictive performance of the digital trace models is not directly comparable with the benchmark specification, since forecasting over a shorter and more recent period is generally less challenging than reconstructing a longer historical series spanning multiple economic regimes.
+
+Where the objective is the historical reconstruction of discontinued official statistics, maximizing temporal coverage may be more valuable than obtaining marginal improvements in predictive accuracy. The exclusion of digital trace variables from the final reconstruction model was a methodological choice to use a model with a more extensive evaluation window.
+
+## What Do Different Unemployment Definitions Measure?
+
+One of the most important findings of this study is that the historical Nigerian unemployment measure and the ILO unemployment measure capture different dimensions of labour market performance. As shown in @tbl-ft_importance-comp, although GDP growth emerged as the dominant predictor under both definitions, the remaining feature rankings differ substantially. The historical domestic definition places greater emphasis on inflation and monetary variables, whereas the ILO definition relies more heavily on lagged unemployment, particularly the two-year autoregressive term, indicating greater temporal persistence. These differences suggest that changing the statistical definition alters not only the reported unemployment rate but also the macroeconomic relationships underlying the measure.
+
+This divergence is consistent with the conceptual basis of the two definitions. The historical Nigerian framework classified individuals working fewer than 40 hours per week as unemployed, making it sensitive to changes in work intensity and employment adequacy. By contrast, the ILO framework classifies anyone performing at least one hour of work for pay or profit as employed, irrespective of whether that work provides sufficient income or stable employment. In an economy dominated by informal and necessity-driven work, adverse macroeconomic conditions are therefore more likely to reduce hours worked or earnings than to remove individuals from economic activity altogether. Consequently, the historical measure appears to capture broader labour underutilisation, while the ILO definition primarily reflects complete labour market exclusion.
+
+To examine whether these relationships are specific to Nigeria (or other developing economies) or characteristic of the ILO definition more generally, the same modelling framework was applied to the United Kingdom's harmonised unemployment series. @tbl-Comparison_wt_Developed_Economy shows that, while GDP growth remained negatively associated with unemployment, inflation overwhelmingly dominated predictive performance, contributing more than twice the importance of GDP growth. By comparison, inflation played a comparatively modest role under both Nigerian definitions (@tbl-ft_importance-comp). Furthermore, the Nigerian ILO model exhibited substantially stronger dependence on lagged unemployment than its UK counterpart, while several monetary variables changed both their relative importance and coefficient direction across countries.
+
+These findings suggest that adopting a common statistical definition does not necessarily produce economically comparable unemployment measures. Although Nigeria and the United Kingdom both report unemployment using the internationally harmonised ILO framework, @tbl-ft_importance-comp and @tbl-Comparison_wt_Developed_Economy demonstrate that the macroeconomic relationships underlying the measure remain strongly influenced by the structure of each country's labour market. In advanced economies, where unemployment primarily reflects movements into and out of formal wage employment, inflation and business cycle conditions play a more prominent role. In contrast, Nigeria's large informal sector means that economic shocks are more likely to affect employment quality and work intensity than complete labour market participation. Consequently, statistical harmonisation improves definitional consistency but does not necessarily harmonise the underlying economic phenomenon being measured.
+
+Taken together, these results reinforce the argument that unemployment statistics are not purely objective measures but operational constructs shaped by statistical definitions and labour market institutions. Nigeria's transition to the ILO framework therefore represents more than a methodological change; it changes the aspect of labour market distress being quantified and, by extension, the macroeconomic relationships that researchers and policymakers observe.
+
+## Limitations
+
+This study should be interpreted in light of several limitations relating to both the underlying data and the reconstruction methodology.
+
+First, the reconstructed series represents a continuation of a historical statistical definition rather than a direct measure of contemporary unemployment. Although the study reconstructs a consistent 40-hour unemployment series, the National Bureau of Statistics (NBS) revised its domestic methodology in 2014 after determining that the previous threshold no longer adequately reflected the realities of Nigeria's evolving labour market. The revised framework lowered the unemployment threshold to 20 hours per week and introduced a distinct underemployment category for individuals working between 20 and 39 hours. Consequently, the post-2014 40-hour series used in this study is not directly observed but derived from the published unemployment and underemployment statistics to preserve consistency with the historical definition. While this harmonization enables longitudinal reconstruction, it implicitly assumes that the historical 40-hour threshold remained an appropriate benchmark after 2014, an assumption that may not fully reflect subsequent structural changes in the Nigerian economy.
+
+Second, the modelling framework assumes that the historical relationship between unemployment and the selected macroeconomic indicators remains sufficiently stable over time. Although the model demonstrated good predictive performance during the validation period, this assumption may weaken as the economy evolves. Structural changes in labour market institutions, monetary policy, or employment composition could alter these relationships, leading to forecast drift. Under normal circumstances, such models would be periodically recalibrated using newly observed unemployment data. However, because the historical unemployment definition has been permanently discontinued, no future observations exist against which the reconstructed series can be validated or the model updated.
+
+Finally, the study is constrained by the availability of explanatory variables. The analysis relies primarily on aggregate macroeconomic indicators, which cannot fully capture regional, sectoral, or demographic heterogeneity in labour market conditions. Although behavioural digital trace data produced modest improvements in predictive performance, their inclusion substantially shortened the estimation period because Google Trends data are only available from 2004 onwards. Given the study's objective of reconstructing the longest possible historical series, preserving temporal coverage was prioritised over marginal improvements in predictive accuracy.
+
+These limitations suggest that the reconstructed series should be interpreted as a statistically informed counterfactual that preserves historical continuity rather than a definitive estimate of the unemployment rate that would have been officially reported. Nevertheless, the framework provides a transparent and empirically validated approach for recovering discontinued statistical series, particularly in settings where methodological changes interrupt long-term economic analysis.
 
 \clearpage
+
+# References
+
+::: {#refs}
+:::
+
+\clearpage
+
+# Appendix
+
 ```{r}
 #| label: tbl-country_minwage
 #| tbl-cap: "@wikipedia_minwage"
@@ -215,7 +1810,7 @@ Assessing Predictive Validity: To determine if trace data remains a stable predi
 
 library(gt)
 
-ddir <- 'data'
+ddir <- file.path(wdir, 'data')
 df <- read.csv(file.path(ddir, "minimum_wage_basis.csv"))
 
 # Drop disclaimer rows
@@ -269,9 +1864,11 @@ head(df, 58) |>
     table.layout       = "fixed"
   )
 ```
+
 Source: Data compiled from @wikipedia_minwage
 
 \clearpage
+
 ```{r}
 #| label: tbl-icls-sessions
 #| tbl-cap: "@icls100years"
@@ -280,7 +1877,7 @@ Source: Data compiled from @wikipedia_minwage
 library(gt)
 library(knitr)
 
-ddir <- 'data'
+ddir <- file.path(wdir,'data')
 df <- read.csv(file.path(ddir, "icls_sessions.csv"))
 
 colnames(df) <- c("Session", "Year", "Key Resolutions", "Source URL")
@@ -333,4 +1930,7 @@ if (knitr::is_latex_output()) {
 
 tbl
 ```
+
 Source: Data compiled from @icls100years and ILO reports.
+
+\clearpage

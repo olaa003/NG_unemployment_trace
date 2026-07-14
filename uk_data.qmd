@@ -1,0 +1,91 @@
+
+```{r}
+library(dplyr)
+library(lubridate)
+library(xts)
+library(zoo)
+library(readr)
+library(purrr)
+
+ddir <- file.path(getwd(), "data")
+wdir <- getwd()
+dir.create("output/uk", showWarnings = FALSE)
+
+# ---- 1. Pull all series from FRED ----
+fred_series <- tibble::tribble(
+  ~name,            ~fred_id,
+  "Unemployment",   "LRHUTTTTGBQ156S",
+  "CPI",            "GBRCPIALLQINMEI",
+  "GDP",            "CLVMNACSCAB1GQUK",
+  "Policy_Rate",    "IRSTCI01GBQ156N",
+  "Long_Rate",      "IRLTLT01GBQ156N",
+  "Short_Rate",     "IR3TIB01GBQ156N",
+  "Claimant_Count", "LMUNRRTTGBQ156S"
+)
+
+pull_fred <- function(name, fred_id) {
+  url <- sprintf("https://fred.stlouisfed.org/graph/fredgraph.csv?id=%s", fred_id)
+  df  <- read_csv(url, show_col_types = FALSE)
+  names(df) <- c("date", name)
+  df |>
+    mutate(date = as.Date(date),
+           !!name := as.numeric(.data[[name]]))
+}
+
+fred_list <- map2(fred_series$name, fred_series$fred_id, pull_fred)
+names(fred_list) <- fred_series$name
+
+# Cache locally so you don't re-pull every render
+walk2(fred_list, fred_series$name,
+      ~ write_csv(.x, sprintf("data/uk/%s.csv", .y)))
+
+# ---- 2. Build aligned quarterly panel ----
+uk_panel <- reduce(fred_list, full_join, by = "date") |>
+  arrange(date) |>
+  rename(time = date) |>
+  filter(time >= as.Date("1983-01-01"))
+
+cat("UK panel: ", nrow(uk_panel), " quarters, ",
+    format(min(uk_panel$time)), " to ", format(max(uk_panel$time)), "\n", sep = "")
+cat("NA counts per column:\n")
+print(colSums(is.na(uk_panel)))
+
+# ---- 3. Build cross-year lags and differenced target ----
+uk_model_df <- uk_panel |>
+  rename(unemployment = Unemployment) |>
+  arrange(time) |>
+  mutate(
+    y_lag4         = lag(unemployment, 4),
+    y_lag8         = lag(unemployment, 8),
+    y_yoy          = y_lag4 - lag(unemployment, 8),
+    d_unemployment = unemployment - y_lag4
+  ) |>
+  filter(!is.na(y_lag8), !is.na(d_unemployment),
+         !is.na(CPI), !is.na(GDP),
+         !is.na(Policy_Rate), !is.na(Long_Rate)) |>
+  select(-unemployment, -Claimant_Count)  # drop level + the alt target
+
+# Leak guard
+stopifnot(!"unemployment" %in% colnames(uk_model_df))
+
+saveRDS(uk_model_df, "output/uk/uk_model_df_diff.rds")
+cat("\nUK modelling sample: ", nrow(uk_model_df), " quarters, ",
+    format(min(uk_model_df$time)), " to ", format(max(uk_model_df$time)), "\n", sep = "")
+cat("Features: ", paste(setdiff(colnames(uk_model_df),
+                                 c("time", "d_unemployment")), collapse = ", "), "\n")
+
+# ---- 2. Build aligned quarterly panel ----
+uk_panel <- reduce(fred_list, full_join, by = "date") |>
+  arrange(date) |>
+  rename(time = date) |>
+  filter(time >= as.Date("1983-01-01"))
+
+# SAVE THE FULL PANEL — this is the file run_uk_pipeline expects to read
+saveRDS(uk_panel, "output/uk/uk_panel.rds")
+
+cat("UK panel: ", nrow(uk_panel), " quarters, ",
+    format(min(uk_panel$time)), " to ", format(max(uk_panel$time)), "\n", sep = "")
+cat("NA counts per column:\n")
+print(colSums(is.na(uk_panel)))
+```
+
