@@ -12,6 +12,8 @@ format:
       - "\\usepackage{booktabs}"
       # Fonts & spacing
       - "\\usepackage{setspace}"
+      - "\\doublespacing"
+      - "\\documentclass[12pt,a4paper]{article}"
       - "\\usepackage{caption}"
       # Page numbering
       - "\\usepackage{fancyhdr}"
@@ -34,10 +36,7 @@ fig-width: 7
 fig-height: 5
 fig-dpi: 300
 fig-align: center
-
-documentclass: article
-fontsize: 11pt
-linestretch: 1.5        
+      
 geometry: margin=1in
 number-sections: true
 
