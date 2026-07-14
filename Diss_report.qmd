@@ -1803,7 +1803,7 @@ These limitations suggest that the reconstructed series should be interpreted as
 
 # Appendix
 
-Source code and extra materials can be found on [this](https://github.com/olaa003/NG_unemployment_trace) reprository.
+Source code and extra materials can be found in [this](https://github.com/olaa003/NG_unemployment_trace) reprository.
 
 ```{r}
 #| label: tbl-country_minwage
