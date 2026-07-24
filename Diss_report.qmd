@@ -331,9 +331,9 @@ Monetary and Interest Rates: Financial rate metrics (e.g., Savings, Prime Lendin
 
 $$\Delta_4 R_t = R_t - R_{t-4}$$
 
-Consumer Price Index (CPI): To prevent temporal aggregation bias, monthly CPI levels are aggregated to quarterly mean levels first, followed by a quarter-on-quarter (QoQ) growth calculation to capture high-frequency price momentum:
+Consumer Price Index (CPI): To prevent temporal aggregation bias, monthly CPI levels are aggregated to quarterly mean levels first, followed by a year-over-year (YoY) growth calculation to capture annual baseline inflation:
 
-$$\text{CPI\_MoM}_t = \frac{\overline{\text{CPI}}_t - \overline{\text{CPI}}_t-1}{\overline{\text{CPI}}_{t-1}}$$
+$$\Delta_4 CPI_t = \frac{\overline{\text{CPI}}_t - \overline{\text{CPI}}_{t-4}}{\overline{\text{CPI}}_{t-4}}$$
 
 ### Temporal Disaggregation and Data Leakage Considerations
 
