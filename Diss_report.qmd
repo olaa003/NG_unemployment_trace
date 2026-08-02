@@ -1706,7 +1706,7 @@ trace_panel <- x_df |> left_join(y_df, by = "time") |> arrange(time) |>
     gdp_growth_yoy = (GDP_constant_2010 - dplyr::lag(GDP_constant_2010, 4)) / dplyr::lag(GDP_constant_2010, 4),
     across(c(Prime_Lending, Max_Lending, Savings_Rate), ~ . - dplyr::lag(., 4), .names = "d_{.col}"),
     reconstructed_level = unemployment,
-    series_status = if_else(!is.na(unemployment), "Observed Historical", "Digital Trace Extension")
+    series_status = if_else(!is.na(unemployment), "Observed Historical", "Modelled Extension")
   )
 
 for (i in seq(which(is.na(trace_panel$reconstructed_level))[1], nrow(trace_panel))) {
@@ -1725,17 +1725,17 @@ for (i in seq(which(is.na(trace_panel$reconstructed_level))[1], nrow(trace_panel
 
 # 3. Quick Plot with Text Wrap
 trace_panel <- trace_panel |> mutate(
-  pi_lower = if_else(series_status == "Digital Trace Extension", reconstructed_level - 1.645 * resid_sd, NA_real_),
-  pi_upper = if_else(series_status == "Digital Trace Extension", reconstructed_level + 1.645 * resid_sd, NA_real_)
+  pi_lower = if_else(series_status == "Modelled Extension", reconstructed_level - 1.645 * resid_sd, NA_real_),
+  pi_upper = if_else(series_status == "Modelled Extension", reconstructed_level + 1.645 * resid_sd, NA_real_)
 )
 
 ggplot(trace_panel |> filter(!is.na(reconstructed_level)), aes(x = time)) +
   geom_ribbon(aes(ymin = pi_lower, ymax = pi_upper), fill = "#1b9e77", alpha = 0.12) +
   geom_line(aes(y = reconstructed_level, color = series_status, linetype = series_status), linewidth = 0.8) +
   geom_vline(xintercept = as.Date("2020-12-01"), color = "grey60", linetype = "dotted") +
-  scale_color_manual(values = c("Observed Historical" = "#111111", "Digital Trace Extension" = "#1b9e77")) +
+  scale_color_manual(values = c("Observed Historical" = "#111111", "Modelled Extension" = "#1b9e77")) +
   labs(
-    title = stringr::str_wrap("Digital Trace Extension of Discontinued Unemployment Series", width = 50),
+    title = stringr::str_wrap("Modelled Extension of Discontinued Unemployment Series", width = 50),
     caption = 'Prediction intervals are based on in-sample residual dispersion and should be \ninterpreted as approximate rather than formal recursive forecast intervals.',
     subtitle = stringr::str_wrap(paste0("Optimized Elastic Net tracking (Alpha = ", best$alpha, ")"), width = 60),
     x = NULL, y = "Unemployment Rate (%)", color = NULL, linetype = NULL
