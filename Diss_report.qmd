@@ -751,7 +751,7 @@ p_cor <- ggplot(cors_df,
     x        = NULL,
     y        = "Correlation Coefficient",
     fill     = NULL,
-    caption  = "Note: Strong upward trends in raw CPI and GDP create an illusion of near-perfect correlation."
+    caption  = "Note: Correlations are notably reduced after transformation."
   ) +
   
   guides(fill = guide_legend(nrow = 1)) +
