@@ -384,6 +384,8 @@ The modelling dataset covered the period from January, 1999 to October, 2020, yi
 ### Evolution of Unemployment under Different Definitions
 
 ```{r fig-target, fig.width=9, fig.height=4.5, fig.cap="Quarterly unemployment rate under the 40-hour definition, 1999 Q1 to 2020 Q4."}
+#| fig-pos: "H"
+
 library(ggplot2)
 library(dplyr)
 library(scales)
@@ -457,6 +459,7 @@ Note: Pre-2014 values were temporally disaggregated from annual data using the D
 @fig-target shows a harmonized quarterly unemployment series for Nigeria between 1999 and 2020 constructed under a consistent less-than-40-hours-per-week definition of unemployment. To ensure comparability over time, observations collected under subsequent NBS methodologies (the 20-hour definition) were converted and temporally disaggregated to produce a unified series. The resulting estimates indicate a long-run increase in unemployment rate, with unemployment rising from below 10% in the late 1990s to over 50% by 2020. While the series exhibits periods of relative stability, particularly during the early and mid-2000s, unemployment increases substantially after 2015, reflecting the combined effects of economic slowdown, the 2016 recession, and broader structural labour market challenges. Unlike the ILO modelled unemployment series @fig-ilo-target, which remains below 6% throughout the same period, this harmonized measure captures the prevalence of insufficient labour market engagement under a substantially stricter employment threshold. The divergence between the two series illustrates how alternative definitions of employment can generate markedly different assessments of labour market conditions
 
 ```{r fig-ilo-target, fig.width=9, fig.height=4.5, fig.cap="Yearly modelled unemployment rate under the ILO definition"}
+#| fig-pos: "H"
 
 y_df <- read.csv(file.path(wdir, "data/ilo_unemployment.csv")) |>
   select(time, obs_value) |>
@@ -511,6 +514,7 @@ ggsave(file.path(wdir, "output/fig_ilo_target_series.png"), p_target,
 ```{r}
 #| label: fig-raw-correlation
 #| fig.cap: Raw Correlations of Features
+#| fig-pos: "H"
 
 # Feature matrix from the build_quarterly_features pipeline
 x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds")) 
@@ -654,6 +658,7 @@ To distinguish genuine economic relationships from common temporal trends, I tra
 ```{r}
 #| label: Fig-stationary-correlation
 #| fig-cap: "Stationary Correlations of Features"
+#| fig-pos: "H"
 
 x_df <- readRDS(file.path(wdir, "output/x_quarterly_xts.rds"))
 
@@ -1167,6 +1172,7 @@ The bars are coloured according to coefficient sign, indicating whether increase
 ```{r}
 #| label: fig-ft-importance
 #| fig.cap: Feature Importances Using the Domestic Definition
+#| fig-pos: "H"
 
 library(purrr)
 library(tidytext)
@@ -1455,7 +1461,7 @@ The domestic model suggests that, after GDP growth, inflation and savings behavi
 ```{r}
 #| label: fig-ft_importance-ilo
 #| fig.cap: Feature Importance Using ILO Definition
-
+#| fig-pos: "H"
 
 comparison_df   <- bind_rows(imp_ilo)
 
@@ -1664,6 +1670,8 @@ The fitted model is now used to project forward the discontinued series;
 #| label: Fig-reconstruction
 #| fig.cap: Forward Projection of Discontinued Series
 #| echo: false
+#| fig-pos: "H"
+
 library(dplyr)
 library(tidyr)
 library(glmnet)
