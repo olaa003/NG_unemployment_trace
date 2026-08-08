@@ -369,6 +369,286 @@ To identify the structural drivers of the reconstruction, the in-sample regressi
 
 For each predictor, its values were randomly permuted, thereby breaking its relationship with the target variable while leaving all other features unchanged. The resulting increase in Root Mean Squared Error (RMSE) was used as a measure of the predictor's contribution to model performance.
 
+
+```{r}
+#| label: fig-methodology
+#| fig-cap: "Methodological framework for reconstructing Nigeria's discontinued 40-hour unemployment series."
+#| fig-width: 6.3
+#| fig-height: 8.0
+#| out-width: 100%
+#| dev.args: !expr list(family = "Times")
+#| echo: false
+#| fig-pos: "H"
+
+
+
+library(grid)
+
+## ---- size and style -------------------------------------------------
+## Width matches the text block; body size is chosen for that width, so
+## all spacing below derives from it and the figure never looks scaled.
+
+W_IN     <- 6.3
+FS_BODY  <- 8.5
+FAM      <- "Times"
+INK      <- "#141414"
+
+FS_HEAD  <- FS_BODY * 1.10
+FS_LABEL <- FS_BODY
+FS_TITLE <- FS_BODY * 1.55
+FS_SUB   <- FS_BODY * 1.05
+
+TITLE <- "Methodological framework"
+SUB   <- paste("Reconstruction of Nigeria's discontinued 40-hour",
+               "unemployment series, 1999 to 2020")
+HEADER_GAP <- FS_BODY * 1.60   # header block to the first row of boxes
+PAD_X    <- FS_BODY * 1.05
+PAD_Y    <- FS_BODY * 1.10
+HEAD_GAP <- FS_BODY * 0.65
+ITEM_GAP <- FS_BODY * 0.60
+ROW_GAP  <- FS_BODY * 2.10
+COL_GAP  <- FS_BODY * 2.60
+MARGIN   <- FS_BODY * 0.40
+RADIUS   <- FS_BODY * 0.45
+LINE_SP  <- 1.42
+LINE_W   <- 0.7
+
+STYLE <- list(
+  problem = list(fill = "#E6E8EB", col = "#48535E", lwd = 0.9),
+  input   = list(fill = "#E4EDF4", col = "#3D6B8A", lwd = 0.8),
+  process = list(fill = "#EBF1F4", col = "#4F6E7D", lwd = 0.8),
+  model   = list(fill = "#D9E7E1", col = "#2E6153", lwd = 1.4),
+  valid   = list(fill = "#F2EEE6", col = "#87724E", lwd = 0.8),
+  output  = list(fill = "#EFE5E2", col = "#8A5A51", lwd = 0.9)
+)
+
+## ---- text measurement and wrapping ----------------------------------
+
+gp_ <- function(size, bold = FALSE) {
+  gpar(fontfamily = FAM, fontsize = size,
+       fontface = if (bold) "bold" else "plain", col = INK)
+}
+
+txt_w <- function(x, size, bold = FALSE) {
+  convertWidth(grobWidth(textGrob(x, gp = gp_(size, bold))),
+               "points", valueOnly = TRUE)
+}
+
+wrap_pts <- function(s, size, max_w, bold = FALSE) {
+  words <- unlist(strsplit(s, "[[:space:]]+"))
+  words <- words[nzchar(words)]
+  lines <- character(0); cur <- ""
+  for (w in words) {
+    trial <- if (nzchar(cur)) paste(cur, w) else w
+    if (nzchar(cur) && txt_w(trial, size, bold) > max_w) {
+      lines <- c(lines, cur); cur <- w
+    } else cur <- trial
+  }
+  c(lines, cur)
+}
+
+lh <- function(size) size * LINE_SP
+
+## ---- content --------------------------------------------------------
+## A part is either text (wrapped to the box) or an expression, which is
+## plotmath and stays on its own line.
+
+item  <- function(label, ...) list(label = label, parts = list(...))
+stage <- function(title, kind, ...) list(title = title, kind = kind,
+                                         items = list(...))
+
+STAGES <- list(
+
+  stage("1. Research problem", "problem",
+        item("", paste("The 40-hour domestic unemployment definition was",
+                       "discontinued after Q4 2020 and replaced by the ILO",
+                       "one-hour standard, breaking comparability.")),
+        item("", paste("Objective: reconstruct a statistically informed",
+                       "counterfactual continuation of the discontinued",
+                       "series."))),
+
+  stage("2. Data inputs", "input",
+        item("2A", paste("Target: 40-hour unemployment rate, 1999 to 2020",
+                         "(NBS): unemployed plus time-related underemployed,",
+                         "that is those in the labour force working fewer",
+                         "than 40 hours and available for more work.")),
+        item("2B", paste("Macroeconomic: real GDP, CPI, savings rate,",
+                         "lending and deposit rates (NBS, CBN), plus lags.")),
+        item("2C", paste("Digital trace: Google Trends search intensity for",
+                         "candidate labour-market terms."))),
+
+  stage("3. Processing", "process",
+        item("3A", paste("Alignment: common quarterly frequency; no",
+                         "artificial within-year dynamics.")),
+        item("3B", "Stationarity: year-on-year transformations of GDP, CPI and rates,",
+             expression(Delta[4] * Y[t] == Y[t] - Y[t - 4])),
+        item("3C", "Features: unemployment lags",
+             expression(paste(Y[t - 4], " and ", Y[t - 8], "."))),
+        item("3D", paste("Digital-trace reduction: candidate search terms are",
+                         "collinear and redundant, so Google Trends is",
+                         "reduced by PCA to two principal components."))),
+
+  stage("4. Elastic net modelling", "model",
+        item("", paste("Regularised regression combining LASSO (L1) and",
+                       "ridge (L2) penalties: handles multicollinearity,",
+                       "performs variable selection, and shrinks",
+                       "coefficients to limit overfitting.")),
+        item("", paste("Specifications: (i) macroeconomic elastic net;",
+                       "(ii) macroeconomic elastic net plus the two PCA",
+                       "trace components."))),
+
+  stage("5. Estimation and validation", "valid",
+        item("5A", paste("Rolling origin: expanding chronological window;",
+                         "one-quarter-ahead forecasts; no look-ahead.")),
+        item("5B", "Tuning: five-fold cross-validation over",
+             expression(paste(alpha %in%
+                              group("{", list(0, 0.2, 0.4, 0.6, 0.8, 1), "}"),
+                              ";")),
+             expression(paste(lambda, " minimises error."))),
+        item("5C", paste("Benchmarks: lag-only AR; macroeconomic elastic",
+                         "net; macroeconomic plus trace."))),
+
+  stage("6. Evaluation and output", "output",
+        item("6A", paste("Accuracy: RMSE, MAE, NRMSE and 90 per cent",
+                         "interval coverage.")),
+        item("6B", paste("Importance: retained coefficients under the",
+                         "40-hour and ILO one-hour definitions.")),
+        item("6C", paste("Reconstruction: forward projection with prediction",
+                         "intervals. The macroeconomic specification is used",
+                         "to preserve the longer historical estimation",
+                         "period; the digital-trace specification provides",
+                         "an extension.")))
+)
+
+## ---- layout ---------------------------------------------------------
+## Six stages in three rows of two, flowing left, right, down. Text is
+## measured and wrapped, and box heights follow the content, so editing
+## the text above cannot make anything overflow or collide.
+
+layout_stage <- function(st, width) {
+  st$title_lines <- wrap_pts(st$title, FS_HEAD, width - 2 * PAD_X, TRUE)
+  labs <- vapply(st$items, function(i) i$label, character(1))
+  labs <- labs[nzchar(labs)]
+  st$indent <- if (length(labs)) {
+    max(vapply(labs, txt_w, numeric(1), FS_LABEL, TRUE)) + 4
+  } else 0
+  avail <- width - 2 * PAD_X - st$indent
+  st$lines <- lapply(st$items, function(it) {
+    out <- list()
+    for (p in it$parts) {
+      if (is.character(p)) out <- c(out, as.list(wrap_pts(p, FS_BODY, avail)))
+      else out <- c(out, list(p))
+    }
+    out
+  })
+  st$w <- width
+  st$content_h <- length(st$title_lines) * lh(FS_HEAD) + HEAD_GAP +
+    sum(vapply(st$lines, function(l) length(l) * lh(FS_BODY), numeric(1))) +
+    ITEM_GAP * (length(st$items) - 1) + 2 * PAD_Y
+  st
+}
+
+## Coordinates are points from the left edge and points down from the top.
+build <- function() {
+  W <- W_IN * 72
+  colw <- (W - 2 * MARGIN - COL_GAP) / 2
+  xs <- c(MARGIN, MARGIN + colw + COL_GAP)
+  sts <- lapply(STAGES, layout_stage, width = colw)
+
+  head_h <- lh(FS_TITLE) + lh(FS_SUB) + HEADER_GAP
+  top <- MARGIN + head_h
+  for (r in split(seq_along(sts), ceiling(seq_along(sts) / 2))) {
+    rh <- max(vapply(r, function(i) sts[[i]]$content_h, numeric(1)))
+    for (k in seq_along(r)) {
+      sts[[r[k]]]$h <- rh          # paired boxes share a height and align
+      sts[[r[k]]]$top <- top
+      sts[[r[k]]]$x <- xs[k]
+    }
+    top <- top + rh + ROW_GAP
+  }
+
+  conn <- list()
+  for (i in seq_len(length(sts) - 1)) {
+    a <- sts[[i]]; b <- sts[[i + 1]]
+    conn[[i]] <- if (i %% 2 == 1) {
+      y <- a$top + a$h / 2         # across a row
+      list(x = c(a$x + a$w, b$x), y = c(y, y))
+    } else {
+      mid <- a$top + a$h + ROW_GAP / 2   # down and back to the left
+      list(x = c(a$x + a$w / 2, a$x + a$w / 2, b$x + b$w / 2, b$x + b$w / 2),
+           y = c(a$top + a$h, mid, mid, b$top))
+    }
+  }
+  list(stages = sts, conn = conn, w_pt = W, h_pt = top - ROW_GAP + MARGIN)
+}
+
+## ---- drawing --------------------------------------------------------
+
+ytop <- function(dy) unit(1, "npc") - unit(dy, "points")
+
+draw_stage <- function(st) {
+  s <- STYLE[[st$kind]]
+  grid.roundrect(x = unit(st$x + st$w / 2, "points"),
+                 y = ytop(st$top + st$h / 2),
+                 width = unit(st$w, "points"),
+                 height = unit(st$h, "points"),
+                 r = unit(RADIUS, "points"),
+                 gp = gpar(fill = s$fill, col = s$col, lwd = s$lwd))
+
+  dy <- st$top + PAD_Y
+  for (ln in st$title_lines) {
+    grid.text(ln, x = unit(st$x + st$w / 2, "points"), y = ytop(dy),
+              just = c("centre", "top"), gp = gp_(FS_HEAD, TRUE))
+    dy <- dy + lh(FS_HEAD)
+  }
+  dy <- dy + HEAD_GAP
+
+  left <- st$x + PAD_X
+  for (k in seq_along(st$items)) {
+    lab <- st$items[[k]]$label
+    if (nzchar(lab)) {
+      grid.text(lab, x = unit(left, "points"), y = ytop(dy),
+                just = c("left", "top"), gp = gp_(FS_LABEL, TRUE))
+    }
+    for (ln in st$lines[[k]]) {
+      grid.text(ln, x = unit(left + st$indent, "points"), y = ytop(dy),
+                just = c("left", "top"), gp = gp_(FS_BODY))
+      dy <- dy + lh(FS_BODY)
+    }
+    dy <- dy + ITEM_GAP
+  }
+}
+
+draw_methodology <- function() {
+  b <- build()
+  grid.newpage()
+  ## Fixed-size viewport, centred and pinned to the top, so a device that
+  ## is wider than the figure leaves margins instead of shearing it.
+  pushViewport(viewport(x = unit(0.5, "npc"), y = unit(1, "npc"),
+                        just = c("centre", "top"),
+                        width = unit(b$w_pt, "points"),
+                        height = unit(b$h_pt, "points"), clip = "off"))
+  grid.text(TITLE, x = unit(0.5, "npc"), y = ytop(MARGIN),
+            just = c("centre", "top"), gp = gp_(FS_TITLE, TRUE))
+  grid.text(SUB, x = unit(0.5, "npc"), y = ytop(MARGIN + lh(FS_TITLE)),
+            just = c("centre", "top"), gp = gp_(FS_SUB))
+
+  for (cn in b$conn) {
+    grid.lines(x = unit(cn$x, "points"), y = ytop(cn$y),
+               arrow = arrow(angle = 20, length = unit(FS_BODY * 0.4, "points"),
+                             type = "closed"),
+               gp = gpar(col = INK, fill = INK, lwd = LINE_W))
+  }
+  for (st in b$stages) draw_stage(st)
+  popViewport()
+}
+
+draw_methodology()
+```
+
+
+\clearpage
+
 # Results
 
 This chapter presents the results of the unemployment forecasting models developed using quarterly macroeconomic indicators and digital trace data for Nigeria. The analysis employed Elastic Net regression with rolling-origin cross-validation to predict unemployment rates one quarter ahead. Rolling-origin evaluation was chosen to preserve temporal ordering and avoid look-ahead bias commonly associated with conventional k-fold cross-validation in time series applications.
